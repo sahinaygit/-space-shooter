@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="score">Score: 0</div>
+            <div id="high-score">High Score: 0</div>
+            <button id="fullscreen-btn" onclick="window.toggleFullscreen()">FULLSCREEN</button>
+            <button id="pause-btn-ui"
+                style="position:absolute; top:90px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto;"
+                onclick="window.togglePauseManual()">PAUSE (P)</button>
+            <button id="lang-toggle-btn-pause"
+                style="position:absolute; top:130px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff;"
+                onclick="window.toggleLanguage()">TÜRKÇE</button>
+            <button id="music-toggle-btn"
+                style="position:absolute; top:170px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; width: 100px;"
+                onclick="window.toggleMusic()">🔊</button>
+            <div id="player-status">
+                <div id="hp-bar-container">
+                    <div id="hp-bar-fill"></div>
+                </div>
+                <div id="weapon-level">Weapon: Lvl 1 <span id="gem-progress" style="color:#ccc; font-size:12px;">(0/4
+                        Gems)</span></div>
+                <div id="bomb-count"
+                    style="font-size: 16px; font-weight: bold; color: #fa0; text-shadow: 0 0 8px #fa0; letter-spacing: 2px;">
+                    BOMBS: 3 <span style="font-size:12px; color:#ccc;">(Press B)</span></div>
+                <div id="emp-status" style="font-size: 14px; font-weight: bold; color: #0af; margin-top: 5px;">
+                    EMP: READY <span style="font-size:12px; color:#ccc;">(Press E)</span></div>
+                <div id="shield-ability-status"
+                    style="font-size: 14px; font-weight: bold; color: #0df; margin-top: 5px;">
+                    SHIELD: READY <span style="font-size:12px; color:#ccc;">(Press Space)</span></div>
+                <div id="dash-status" style="font-size: 14px; font-weight: bold; color: #fff; margin-top: 5px;">
+                    DASH: READY <span style="font-size:12px; color:#ccc;">(Press Shift)</span></div>
+                <div id="powerup-status"
+                    style="font-size: 14px; font-weight: bold; color: #f0f; display: none; margin-top: 5px;">POWERUP:
+                    ACTIVE (5s)</div>
+            </div>
+
+            <div id="combo-ui" style="display:none; position:absolute; bottom:20px; right:20px; text-align:right;">
+                <div id="combo-text"
+                    style="color:#ff0; font-weight:bold; font-size:24px; text-shadow:0 0 10px #ff0; font-style: italic;">
+                    COMBO x1</div>
+            </div>
+
+            <div id="wave-ui"
+                style="position:absolute; top:40%; left:0; width:100%; text-align:center; opacity:0; pointer-events:none; transition:opacity 0.5s;">
+                <h1 id="wave-text"
+                    style="font-size:80px; color:#0ff; text-shadow:0 0 20px #0ff, 0 0 40px #fff; margin:0;">WAVE 1</h1>
+                <div id="wave-subtext" style="font-size:24px; color:#fa0; text-shadow:0 0 10px #fa0; margin-top:10px;">
+                </div>
+            </div>
+            <div id="boss-ui"
+                style="display:none; position:absolute; top:20px; right:20px; width:300px; text-align:right;">
+                <div id="boss-name" style="color:#f00; font-weight:bold; font-size:20px; text-shadow:0 0 10px #f00;">
+                    MOTHERSHIP</div>
+                <div id="boss-hp-container"
+                    style="width:100%; height:15px; background:rgba(255,0,0,0.3); border:2px solid rgba(255,255,255,0.5); border-radius:10px; overflow:hidden; margin-top:5px; box-shadow:0 0 10px rgba(255,0,0,0.5);">
+                    <div id="boss-hp-fill"
+                        style="width:100%; height:100%; background:#f00; box-shadow:0 0 10px #f00; transition:width 0.2s;">
+                    </div>
+                </div>
+            </div>
+            <div id="shop-screen" class="hidden">
+                <h1>Hangar / Shop</h1>
+                <div id="shop-gems-display"><span id="shop-credits-label">Credits:</span> <span
+                        id="shop-gems-count">0</span> <span id="shop-gems-suffix">Gems</span></div>
+                <div class="shop-grid">
+                    <div class="shop-item" id="shop-item-hp">
+                        <div class="item-icon">➕</div>
+                        <h3>Hull Integrity</h3>
+                        <p>Increase Max HP</p>
+                        <button class="buy-btn" onclick="window.buyUpgrade('hp')">Cost: <span
+                                class="cost">10</span></button>
+                    </div>
+                    <div class="shop-item" id="shop-item-speed">
+                        <div class="item-icon">⚡</div>
+                        <h3>Overclock</h3>
+                        <p>Increase Move Speed</p>
+                        <button class="buy-btn" onclick="window.buyUpgrade('speed')">Cost: <span
+                                class="cost">15</span></button>
+                    </div>
+                    <div class="shop-item" id="shop-item-repair">
+                        <div class="item-icon">🛠️</div>
+                        <h3>Nano-Repair</h3>
+                        <p>Restore 1 HP</p>
+                        <button class="buy-btn" onclick="window.buyUpgrade('repair')">Cost: <span
+                                class="cost">5</span></button>
+                    </div>
+                    <div class="shop-item" id="shop-item-bombs">
+                        <div class="item-icon">💣</div>
+                        <h3>Bomb Capacity</h3>
+                        <p>More Max Bombs</p>
+                        <button class="buy-btn" onclick="window.buyUpgrade('bombs')">Cost: <span
+                                class="cost">20</span></button>
+                    </div>
+                </div>
+                <button id="close-shop-btn"
+                    style="margin-top: 30px; background: #0f0; box-shadow: 0 0 15px #0f0;">Resume Mission</button>
+            </div>
+
+            <div id="start-screen">
+                <h1>Space Shooter</h1>
+                <p>WASD/Arrows to move. Space to shoot. Shift to dash.</p>
+                <button id="start-btn">Start New Game</button>
+                <button id="continue-btn" style="display:none; margin-top:20px;">Continue Saved Game</button>
+                <button id="lang-toggle-btn"
+                    style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px;">TÜRKÇE</button>
+                <button id="music-toggle-btn-start"
+                    style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px; width: 120px;"
+                    onclick="window.toggleMusic()">🔊</button>
+            </div>
+
+            <div id="ship-selection-screen" class="hidden">
+                <h1 id="ship-select-title" style="color:#0ff; margin-bottom: 20px;">SELECT YOUR SHIP</h1>
+                <div style="display: flex; gap: 20px; justify-content: center; align-items: stretch;">
+                    <div class="ship-option" onclick="window.selectShip('balanced')"
+                        style="background: rgba(255,255,255,0.05); border: 2px solid #aaa; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
+                        <h2 style="color:#aaa;">Balanced Cruiser</h2>
+                        <svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg"
+                            style="margin: 10px 0;">
+                            <path d="M 0,-30 L 15,-10 L 30,20 L 15,15 L 0,30 L -15,15 L -30,20 L -15,-10 Z"
+                                fill="#4fd1c5" stroke="#fff" stroke-width="1" />
+                        </svg>
+                        <ul
+                            style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
+                            <li>HP: 5</li>
+                            <li>Speed: 5</li>
+                            <li>Weapon: Lvl 1</li>
+                        </ul>
+                    </div>
+                    <div class="ship-option" onclick="window.selectShip('speed')"
+                        style="background: rgba(255,255,255,0.05); border: 2px solid #0f0; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
+                        <h2 style="color:#0f0;">Light Interceptor</h2>
+                        <svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg"
+                            style="margin: 10px 0;">
+                            <path d="M 0,-40 L 10,-5 L 20,30 L 10,20 L 0,40 L -10,20 L -20,30 L -10,-5 Z" fill="#48bb78"
+                                stroke="#fff" stroke-width="1" />
+                        </svg>
+                        <ul
+                            style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
+                            <li>HP: 3 <span style="color:#f00;">(-2)</span></li>
+                            <li>Speed: 7 <span style="color:#0f0;">(+2)</span></li>
+                            <li>Weapon: Lvl 1</li>
+                        </ul>
+                    </div>
+                    <div class="ship-option" onclick="window.selectShip('heavy')"
+                        style="background: rgba(255,255,255,0.05); border: 2px solid #f00; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
+                        <h2 style="color:#f00;">Heavy Dreadnought</h2>
+                        <svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg"
+                            style="margin: 10px 0;">
+                            <rect x="-20" y="-20" width="40" height="50" rx="5" fill="#e53e3e" stroke="#fff"
+                                stroke-width="1" />
+                            <path d="M 0,-40 L 20,-20 L -20,-20 Z" fill="#e53e3e" stroke="#fff" stroke-width="1" />
+                        </svg>
+                        <ul
+                            style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
+                            <li>HP: 7 <span style="color:#0f0;">(+2)</span></li>
+                            <li>Speed: 3.5 <span style="color:#f00;">(-1.5)</span></li>
+                            <li>Weapon: Lvl 2 <span style="color:#0f0;">(+1)</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-over-screen" class="hidden">
+                <h1>Game Over</h1>
+                <p id="final-score">Score: 0</p>
+                <p id="gameover-wave-info" style="color:#0ff; font-size:14px; margin-bottom:10px; margin-top:-20px;">
+                </p>
+                <button id="restart-btn">Start New Game</button>
+                <button id="continue-gameover-btn"
+                    style="display:none; margin-top:15px; background:#fa0; box-shadow:0 0 15px #fa0; color:#0f0f1b;">⚡
+                    Continue from Wave <span id="continue-wave-num">?</span></button>
+            </div>
+
+            <div id="victory-screen" class="hidden">
+                <h1 style="color:#ffd700; text-shadow:0 0 20px #ffd700; font-style:italic;">GALACTIC VICTORY</h1>
+                <p id="victory-score" style="font-size:24px; color:#0ff;">Score: 0</p>
+                <p style="margin-bottom:20px;">You have defeated the Mothership and saved the galaxy!</p>
+                <button id="victory-restart-btn"
+                    style="background: linear-gradient(45deg, #0af, #0ff); box-shadow: 0 0 20px #0af;">Play
+                    Again</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js?v=fix8"></script>
+</body>
+
+</html>
