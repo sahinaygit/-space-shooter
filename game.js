@@ -7,6 +7,9 @@ canvas.height = 750;
 // --- LOCALIZATION SYSTEM ---
 let g_lang = 'en'; // 'en' or 'tr'
 let g_musicEnabled = true;
+let g_soundsEnabled = true;
+let g_musicVolume = 0.5;
+let g_soundsVolume = 0.5;
 const translations = {
     en: {
         score: "Score:",
@@ -49,7 +52,17 @@ const translations = {
         shipHeavy: "Heavy Dreadnought",
         victoryTitle: "GALACTIC VICTORY",
         victoryText: "You have defeated the Mothership and saved the galaxy!",
-        playAgain: "Play Again"
+        playAgain: "Play Again",
+        empReady: "EMP: READY",
+        shieldReady: "SHIELD: READY",
+        dashReady: "DASH: READY",
+        pressE: "(Press E)",
+        pressSpace: "(Press Space)",
+        pressShift: "(Shift: Dash)",
+        solarActivity: "WARNING: SOLAR ACTIVITY",
+        meteorShower: "WARNING: METEOR SHOWER",
+        gravityAnomaly: "WARNING: GRAVITY ANOMALY",
+        combo: "COMBO"
     },
     tr: {
         score: "Skor:",
@@ -69,7 +82,7 @@ const translations = {
         continueBtn: "Kayıtlı Oyuna Devam Et",
         gameOver: "Oyun Bitti",
         restartBtn: "Yeni Oyun Başlat",
-        continueWave: "Dalga'dan Devre Et",
+        continueWave: "Dalga'dan Devam Et",
         shopTitle: "Hangarlar / Market",
         shopCredits: "Kredi:",
         shopResume: "Görevi Sürdür",
@@ -92,7 +105,17 @@ const translations = {
         shipHeavy: "Ağır Zırhlı",
         victoryTitle: "GALAKTİK ZAFER",
         victoryText: "Ana Gemiyi yendin ve galaksiyi kurtardın!",
-        playAgain: "Tekrar Oyna"
+        playAgain: "Tekrar Oyna",
+        empReady: "EMP: HAZIR",
+        shieldReady: "KALKAN: HAZIR",
+        dashReady: "ATILMA: HAZIR",
+        pressE: "(E'ye Bas)",
+        pressSpace: "(Boşluk: Kalkan)",
+        pressShift: "(Shift: Atılma)",
+        solarActivity: "UYARI: GÜNEŞ ETKİNLİĞİ",
+        meteorShower: "UYARI: METEOR YAĞMURU",
+        gravityAnomaly: "UYARI: YERÇEKİMİ ANOMALİSİ",
+        combo: "KOMBO"
     }
 };
 // -----------------------------
@@ -134,6 +157,7 @@ const victoryRestartBtn = document.getElementById('victory-restart-btn');
 
 function updateLanguageUI() {
     const t = translations[g_lang];
+    document.documentElement.lang = g_lang; // Sync HTML lang for correct CSS casing (Turkish İ)
 
     // Start Screen
     const startTitle = document.querySelector('#start-screen h1');
@@ -235,15 +259,54 @@ window.toggleMusic = function () {
         else if (g_isShopOpen) MusicManager.start('HANGAR');
         else if (boss) MusicManager.start('BOSS');
         else if (gameState === 'PLAYING') MusicManager.start('COMBAT');
+    } else {
+        MusicManager.stop();
     }
+};
+
+window.toggleSounds = function () {
+    g_soundsEnabled = !g_soundsEnabled;
+    saveGame();
+    updateSoundsUI();
+    playSound('powerup');
+};
+
+window.setMusicVolume = function (val) {
+    g_musicVolume = parseFloat(val);
+    saveGame();
+    // Update all sliders
+    document.querySelectorAll('.music-vol-slider').forEach(s => s.value = val);
+    // Immediate volume update for currently playing music
+    if (window.musicMasterGain) {
+        window.musicMasterGain.gain.setTargetAtTime(g_musicVolume, audioCtx.currentTime, 0.05);
+    }
+};
+
+window.setSoundsVolume = function (val) {
+    g_soundsVolume = parseFloat(val);
+    saveGame();
+    // Update all sliders
+    document.querySelectorAll('.sfx-vol-slider').forEach(s => s.value = val);
+    // Play a small sound to preview
+    if (frameCount % 60 === 0) playSound('shoot');
 };
 
 function updateMusicUI() {
     const btn = document.getElementById('music-toggle-btn');
     const btnStart = document.getElementById('music-toggle-btn-start');
-    const icon = g_musicEnabled ? '🔊' : '🔇';
+    const icon = g_musicEnabled ? '🎵' : '🔇';
     if (btn) btn.innerText = icon;
     if (btnStart) btnStart.innerText = icon;
+    document.querySelectorAll('.music-vol-slider').forEach(s => s.value = g_musicVolume);
+}
+
+function updateSoundsUI() {
+    const btn = document.getElementById('sfx-toggle-btn');
+    const btnStart = document.getElementById('sfx-toggle-btn-start');
+    const icon = g_soundsEnabled ? '🔊' : '🔇';
+    if (btn) btn.innerText = icon;
+    if (btnStart) btnStart.innerText = icon;
+    document.querySelectorAll('.sfx-vol-slider').forEach(s => s.value = g_soundsVolume);
 }
 
 function openShop() {
@@ -316,6 +379,9 @@ let noiseBuffer;
 function initAudio() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window.musicMasterGain = audioCtx.createGain();
+        window.musicMasterGain.gain.setValueAtTime(g_musicVolume, audioCtx.currentTime);
+        window.musicMasterGain.connect(audioCtx.destination);
         createNoiseBuffer();
         if (g_musicEnabled) MusicManager.start('MENU');
     }
@@ -332,7 +398,7 @@ function createNoiseBuffer() {
 }
 
 function playSound(type) {
-    if (!audioCtx) return;
+    if (!audioCtx || !g_soundsEnabled) return;
     const now = audioCtx.currentTime;
 
     if (type === 'shoot') {
@@ -343,7 +409,7 @@ function playSound(type) {
         osc.type = 'square';
         osc.frequency.setValueAtTime(880, now);
         osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
-        gainNode.gain.setValueAtTime(0.05, now);
+        gainNode.gain.setValueAtTime(0.05 * g_soundsVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         osc.start(now); osc.stop(now + 0.1);
     } else if (type === 'hit') {
@@ -354,7 +420,7 @@ function playSound(type) {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(150, now);
         osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
-        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.setValueAtTime(0.1 * g_soundsVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.start(now); osc.stop(now + 0.2);
     } else if (type === 'boss_hit') {
@@ -365,7 +431,7 @@ function playSound(type) {
         osc.type = 'square';
         osc.frequency.setValueAtTime(100, now);
         osc.frequency.exponentialRampToValueAtTime(30, now + 0.2);
-        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.setValueAtTime(0.1 * g_soundsVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.start(now); osc.stop(now + 0.2);
     } else if (type === 'powerup') {
@@ -376,7 +442,7 @@ function playSound(type) {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(440, now);
         osc.frequency.linearRampToValueAtTime(880, now + 0.2);
-        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.setValueAtTime(0.1 * g_soundsVolume, now);
         gainNode.gain.linearRampToValueAtTime(0.001, now + 0.2);
         osc.start(now); osc.stop(now + 0.2);
     } else if (type === 'boss_spawn' || type === 'warning') {
@@ -393,7 +459,7 @@ function playSound(type) {
         osc.frequency.setValueAtTime(55, now);
         osc.frequency.linearRampToValueAtTime(110, now + 0.5);
         osc.frequency.linearRampToValueAtTime(55, now + 1.5);
-        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.setValueAtTime(0.15 * g_soundsVolume, now);
         gainNode.gain.linearRampToValueAtTime(0.001, now + 2.0);
         osc.start(now); osc.stop(now + 2.0);
 
@@ -404,7 +470,7 @@ function playSound(type) {
         osc2.frequency.setValueAtTime(220, now + 0.75);
         osc2.frequency.setValueAtTime(440, now + 1.0);
         osc2.frequency.setValueAtTime(220, now + 1.25);
-        gainNode2.gain.setValueAtTime(0.08, now);
+        gainNode2.gain.setValueAtTime(0.08 * g_soundsVolume, now);
         gainNode2.gain.linearRampToValueAtTime(0.001, now + 1.5);
         osc2.start(now); osc2.stop(now + 1.5);
     } else if (type === 'explosion' || type === 'asteroid_break') {
@@ -419,18 +485,61 @@ function playSound(type) {
         gainNode.connect(audioCtx.destination);
 
         if (type === 'explosion') {
-            filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(1000, now);
-            filter.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-            gainNode.gain.setValueAtTime(0.3, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-            mainSource.start(now); mainSource.stop(now + 0.3);
+            // Cinematic Explosion Design
+
+            // "Thick Bang and Rumble" Exploration (Kalın + Yayılan)
+
+            // Layer 1: The Heavy Punch (Derin Tok Vuruş)
+            // Triangle waves have a bit more harmonic thickness than sine at low frequencies
+            const punch = audioCtx.createOscillator();
+            const punchGain = audioCtx.createGain();
+            punch.connect(punchGain);
+            punchGain.connect(audioCtx.destination);
+            punch.type = 'triangle';
+            punch.frequency.setValueAtTime(120, now);
+            punch.frequency.exponentialRampToValueAtTime(30, now + 0.3); // Hızlıca sub-basa iniyor
+            punchGain.gain.setValueAtTime(1.0 * g_soundsVolume, now);
+            punchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            punch.start(now); punch.stop(now + 0.3);
+
+            // Layer 2: The "Bang" Focus (Yoğun, Boğuk Gürültü Darbesi)
+            // Starts much lower (800Hz max) to prevent thinness, heavy low-pass filtering.
+            const bang = audioCtx.createBufferSource();
+            bang.buffer = noiseBuffer;
+            const bangFilter = audioCtx.createBiquadFilter();
+            const bangGain = audioCtx.createGain();
+            bang.connect(bangFilter);
+            bangFilter.connect(bangGain);
+            bangGain.connect(audioCtx.destination);
+            bangFilter.type = 'lowpass';
+            bangFilter.frequency.setValueAtTime(800, now);
+            bangFilter.frequency.exponentialRampToValueAtTime(50, now + 0.8);
+            bangGain.gain.setValueAtTime(1.0 * g_soundsVolume, now);
+            bangGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            bang.start(now); bang.stop(now + 0.8);
+
+            // Layer 3: The Propagating Rumble (Yayılan ve Çöken Gümbürtü)
+            // Simulates the shockwave continuing outwards. Swells up slightly, then trails off completely in sub frequencies.
+            const rumble = audioCtx.createBufferSource();
+            rumble.buffer = noiseBuffer;
+            const rumbleFilter = audioCtx.createBiquadFilter();
+            const rumbleGain = audioCtx.createGain();
+            rumble.connect(rumbleFilter);
+            rumbleFilter.connect(rumbleGain);
+            rumbleGain.connect(audioCtx.destination);
+            rumbleFilter.type = 'lowpass';
+            rumbleFilter.frequency.setValueAtTime(250, now);
+            rumbleFilter.frequency.exponentialRampToValueAtTime(15, now + 2.5);
+            rumbleGain.gain.setValueAtTime(0, now); // Fade in effect
+            rumbleGain.gain.linearRampToValueAtTime(0.6 * g_soundsVolume, now + 0.1); // Swell
+            rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5); // Very long decay
+            rumble.start(now); rumble.stop(now + 2.5);
         } else {
             // asteroid_break - deep, stony crumble
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(400, now);
             filter.frequency.exponentialRampToValueAtTime(40, now + 0.5);
-            gainNode.gain.setValueAtTime(0.4, now);
+            gainNode.gain.setValueAtTime(0.4 * g_soundsVolume, now);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
             mainSource.start(now); mainSource.stop(now + 0.5);
         }
@@ -450,7 +559,7 @@ function playSound(type) {
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(1000, now + delay);
             filter.frequency.exponentialRampToValueAtTime(20, now + delay + 1.0);
-            gain.gain.setValueAtTime(0.4, now + delay);
+            gain.gain.setValueAtTime(0.4 * g_soundsVolume, now + delay);
             gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 1.5);
             source.start(now + delay); source.stop(now + delay + 1.5);
         }
@@ -462,7 +571,7 @@ function playSound(type) {
         thump.type = 'sine';
         thump.frequency.setValueAtTime(80, now);
         thump.frequency.exponentialRampToValueAtTime(20, now + 1.5);
-        thumpGain.gain.setValueAtTime(0.5, now);
+        thumpGain.gain.setValueAtTime(0.5 * g_soundsVolume, now);
         thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
         thump.start(now); thump.stop(now + 1.5);
     } else if (type === 'bomb') {
@@ -473,7 +582,7 @@ function playSound(type) {
         osc.type = 'square';
         osc.frequency.setValueAtTime(100, now);
         osc.frequency.exponentialRampToValueAtTime(10, now + 1);
-        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.setValueAtTime(0.3 * g_soundsVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1);
         osc.start(now); osc.stop(now + 1);
     } else if (type === 'combo') {
@@ -483,7 +592,7 @@ function playSound(type) {
         gainNode.connect(audioCtx.destination);
         osc.type = 'sine';
         osc.frequency.setValueAtTime(600, now);
-        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.setValueAtTime(0.1 * g_soundsVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         osc.start(now); osc.stop(now + 0.1);
     }
@@ -502,14 +611,18 @@ const MusicManager = {
     },
     tick() {
         if (!g_musicEnabled || !audioCtx || audioCtx.state === 'suspended') return;
+        if (!window.musicMasterGain) initAudio();
+
         const now = audioCtx.currentTime;
         this.beat = (this.beat + 1) % 16;
+
+        const mainGain = window.musicMasterGain;
 
         const playNote = (freq, type = 'sine', decay = 0.2, vol = 0.05) => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(mainGain); // Connect to music master gain, not audioCtx.destination
             osc.type = type;
             osc.frequency.setValueAtTime(freq, now);
             gain.gain.setValueAtTime(vol, now);
@@ -518,25 +631,54 @@ const MusicManager = {
             osc.stop(now + decay);
         };
 
+        const playPad = (freq, type = 'sine', decay = 1.0, vol = 0.02) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(mainGain);
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(vol, now + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + decay);
+            osc.start(now);
+            osc.stop(now + decay);
+        };
+
         if (this.state === 'MENU') {
-            // Ambient deep pulses
-            if (this.beat % 8 === 0) playNote(55, 'sine', 1.0, 0.1);
-            if (this.beat % 8 === 4) playNote(41.2, 'sine', 0.8, 0.08);
+            // Ambient space vibe
+            if (this.beat % 8 === 0) {
+                playPad(110, 'sine', 2.0, 0.05);
+                playPad(164.8, 'sine', 1.8, 0.03);
+            }
+            if (this.beat % 16 === 8) playPad(130.8, 'sine', 2.0, 0.04);
+            if (this.beat % 4 === 2) playNote(440, 'triangle', 0.5, 0.01);
         } else if (this.state === 'COMBAT') {
-            // Techno rhythmic bass
-            const pattern = [55, 55, 110, 55, 55, 55, 110, 0, 55, 55, 110, 55, 55, 110, 82.4, 0];
-            const note = pattern[this.beat];
-            if (note > 0) playNote(note, 'square', 0.1, 0.03);
-            if (this.beat % 4 === 0) playNote(60, 'triangle', 0.1, 0.05); // Kick feel
+            // High energy techno/trance feel
+            const bass = [55, 55, 55, 55, 55, 55, 65, 48];
+            playNote(bass[this.beat % 8], 'sawtooth', 0.15, 0.04);
+
+            if (this.beat % 4 === 0) playNote(60, 'sine', 0.1, 0.1); // Kick
+            if (this.beat % 8 === 4) playNote(800, 'triangle', 0.1, 0.02); // Snare/Hihat hint
+
+            // Arpeggio
+            const melody = [220, 261.6, 329.6, 440, 392, 329.6, 261.6, 196];
+            if (this.beat % 2 === 0) playNote(melody[this.beat / 2 % 8], 'square', 0.1, 0.02);
         } else if (this.state === 'BOSS') {
             // Intense aggressive pulses
-            if (this.beat % 2 === 0) playNote(40 + (Math.sin(this.beat) * 10), 'sawtooth', 0.15, 0.06);
-            if (this.beat % 4 === 2) playNote(220, 'square', 0.05, 0.02);
+            playNote(40 + (Math.sin(this.beat) * 5), 'sawtooth', 0.2, 0.06);
+            if (this.beat % 2 === 0) playNote(80, 'square', 0.1, 0.04);
+            if (this.beat % 4 === 2) playNote(220 * (1 + Math.random() * 0.1), 'sawtooth', 0.1, 0.03);
+            if (this.beat % 16 === 0) playPad(40, 'sawtooth', 3.0, 0.05);
         } else if (this.state === 'HANGAR') {
-            // Chill melodic lounge
-            const chill = [220, 0, 329.6, 0, 293.7, 0, 220, 0, 261.6, 0, 329.6, 0, 392, 0, 329.6, 0];
-            const note = chill[this.beat];
-            if (note > 0) playNote(note, 'sine', 0.5, 0.04);
+            // Smooth chillwave
+            const chords = [220, 220, 261.6, 261.6, 196, 196, 220, 220];
+            if (this.beat % 8 === 0) {
+                playPad(chords[this.beat / 8], 'sine', 4.0, 0.06);
+                playNote(chords[this.beat / 8] * 2, 'triangle', 2.0, 0.02);
+            }
+            const lead = [440, 0, 493.8, 523.2, 0, 440, 392, 0];
+            if (lead[this.beat % 8] > 0) playNote(lead[this.beat % 8], 'sine', 0.8, 0.03);
         }
     },
     stop() {
@@ -1027,7 +1169,7 @@ function updatePlayerStatusUI() {
 
     if (empStatusElement) {
         if (player.empCooldown <= 0) {
-            empStatusElement.innerHTML = `EMP: READY <span style="font-size:12px; color:#ccc;">(Press E)</span>`;
+            empStatusElement.innerHTML = `${t.empReady} <span style="font-size:12px; color:#ccc;">${t.pressE}</span>`;
             empStatusElement.style.color = '#0af';
             empStatusElement.style.textShadow = '0 0 10px #0af';
         } else {
@@ -1040,7 +1182,7 @@ function updatePlayerStatusUI() {
 
     if (shieldAbilityStatusElement) {
         if (player.shieldAbilityCooldown <= 0) {
-            shieldAbilityStatusElement.innerHTML = `SHIELD: READY <span style="font-size:12px; color:#ccc;">(Press Space)</span>`;
+            shieldAbilityStatusElement.innerHTML = `${t.shieldReady} <span style="font-size:12px; color:#ccc;">${t.pressSpace}</span>`;
             shieldAbilityStatusElement.style.color = '#0df';
             shieldAbilityStatusElement.style.textShadow = '0 0 10px #0df';
         } else {
@@ -1053,7 +1195,7 @@ function updatePlayerStatusUI() {
 
     if (dashStatusElement) {
         if (player.dashCooldown <= 0) {
-            dashStatusElement.innerHTML = `DASH: READY <span style="font-size:12px; color:#ccc;">(Press Shift)</span>`;
+            dashStatusElement.innerHTML = `${t.dashReady} <span style="font-size:12px; color:#ccc;">${t.pressShift}</span>`;
             dashStatusElement.style.color = '#fff';
             dashStatusElement.style.textShadow = '0 0 10px #fff';
         } else {
@@ -1080,7 +1222,8 @@ function updateBossUI() {
 function updateComboUI() {
     if (g_combo > 0 && g_comboMultiplier > 1) {
         comboUI.style.display = 'block';
-        comboText.innerText = `COMBO x${g_comboMultiplier}`;
+        const t = translations[g_lang];
+        comboText.innerText = `${t.combo} x${g_comboMultiplier}`;
     } else {
         comboUI.style.display = 'none';
         comboUI.style.transform = 'scale(1)';
@@ -1369,7 +1512,10 @@ function saveGame() {
         gemsCollected: player.gemsCollected,
         bombs: g_bombs,
         lang: g_lang,
-        music: g_musicEnabled
+        music: g_musicEnabled,
+        sounds: g_soundsEnabled,
+        musicVol: g_musicVolume,
+        soundsVol: g_soundsVolume
     };
     localStorage.setItem('spaceShooterSave', JSON.stringify(data));
     // Update both continue buttons
@@ -1408,18 +1554,23 @@ function updateStars() {
     });
 }
 
+// High-Quality Realistic Planet Assets
+const hqImgMars = new Image(); hqImgMars.src = 'assets/planet_red.png?v=2';
+const hqImgSaturn = new Image(); hqImgSaturn.src = 'assets/planet_yellow.png?v=2';
+const hqImgUranus = new Image(); hqImgUranus.src = 'assets/planet_blue.png?v=2';
+
 function spawnPlanet() {
-    const type = planetTypes[Math.floor(Math.random() * planetTypes.length)];
-    let size = 150 + Math.random() * 150;
-    if (type === 'Saturn') size *= 1.5;
+    const hqTypes = ['Mars', 'Saturn', 'Uranus'];
+    const type = hqTypes[Math.floor(Math.random() * hqTypes.length)];
+    let size = 300 + Math.random() * 500; // Much larger for photorealistic detail
 
     planets.push({
-        x: Math.random() * (canvas.width - size),
+        x: (Math.random() * canvas.width) - (size / 2),
         y: -size - 100,
         size: size,
-        speed: 0.2 + Math.random() * 0.3, // slow for parallax
+        speed: 0.05 + Math.random() * 0.15, // Slower for majestic parallax
         type: type,
-        img: type === 'Mars' ? imgMars : (type === 'Saturn' ? imgSaturn : (type === 'Uranus' ? imgUranus : imgMoon))
+        img: type === 'Mars' ? hqImgMars : (type === 'Saturn' ? hqImgSaturn : hqImgUranus)
     });
 }
 
@@ -1440,9 +1591,9 @@ function updatePlanets() {
 function drawPlanets() {
     planets.forEach(p => {
         ctx.save();
-        ctx.globalAlpha = 0.7; // slightly more visible for the lighting effect
+        ctx.globalAlpha = 1.0; // Restored to full opacity since the backgound is gone
         if (p.img.complete) {
-            ctx.drawImage(p.img, p.x, p.y, p.size, p.size * (p.type === 'Saturn' ? 0.75 : 1));
+            ctx.drawImage(p.img, p.x, p.y, p.size, p.size); // The new image bounds are square
         }
         ctx.restore();
     });
@@ -1533,6 +1684,7 @@ function startGame(loadSave = false) {
 
 function gameOver() {
     gameState = 'GAMEOVER';
+    triggerShake(20); // Final impact shake
     window.isPausedGlobal = false;
     MusicManager.start('MENU');
 
@@ -1814,14 +1966,15 @@ function createParticles(x, y, color, type = 'normal') {
 }
 
 function update() {
-    if (gameState !== 'PLAYING') return;
-
+    // Screen shake update (independent of game state so it stops at Game Over)
     if (g_shakeTime > 0) {
         g_shakeTime--;
         if (g_shakeTime <= 0) {
             gameContainer.classList.remove('shake');
         }
     }
+
+    if (gameState !== 'PLAYING') return;
 
     // Player movement
     let currentSpeed = player.speed;
@@ -1892,25 +2045,26 @@ function update() {
     if (hazardState.type === 'NONE') {
         const hazardInterval = 1200; // Check every 20 seconds
         if (frameCount % hazardInterval === 0 && g_wave >= 2 && !boss) {
+            const t = translations[g_lang];
             const rand = Math.random();
-            if (rand < 0.3) {
-                hazardState.type = 'METEOR_SHOWER';
+            if (rand < 0.33) {
+                hazardState.type = 'METEORS';
                 hazardState.duration = 600;
-                showWaveUI('WARNING: METEOR SHOWER', true);
+                showWaveUI(t.meteorShower, true);
                 playSound('warning');
-            } else if (rand < 0.6) {
-                hazardState.type = 'SOLAR_FLARE';
+            } else if (rand < 0.66) {
+                hazardState.type = 'SOLAR_FLARES';
                 hazardState.duration = 480; // 8 seconds
                 hazardState.timer = 0;
                 hazardState.flares = [];
-                showWaveUI('WARNING: SOLAR ACTIVITY', true);
+                showWaveUI(t.solarActivity, true);
                 playSound('warning');
-            } else if (rand < 0.9 && g_wave >= 4) {
+            } else if (g_wave >= 4) { // Only if wave is high enough for Black Hole
                 hazardState.type = 'BLACK_HOLE';
                 hazardState.duration = 600; // 10 seconds
                 hazardState.x = canvas.width / 2;
                 hazardState.y = 200;
-                showWaveUI('WARNING: GRAVITY ANOMALY', true);
+                showWaveUI(t.gravityAnomaly, true);
                 playSound('warning');
             }
         }
@@ -3343,6 +3497,9 @@ try {
         const data = JSON.parse(startupData);
         if (data.lang) g_lang = data.lang;
         if (data.hasOwnProperty('music')) g_musicEnabled = data.music;
+        if (data.hasOwnProperty('sounds')) g_soundsEnabled = data.sounds;
+        if (data.hasOwnProperty('musicVol')) g_musicVolume = data.musicVol;
+        if (data.hasOwnProperty('soundsVol')) g_soundsVolume = data.soundsVol;
     }
 } catch (e) {
     console.warn('Failed to parse startup data:', e);
@@ -3350,6 +3507,7 @@ try {
 
 updateLanguageUI();
 updateMusicUI();
+updateSoundsUI();
 updateScoreUI();
 
 initStars();

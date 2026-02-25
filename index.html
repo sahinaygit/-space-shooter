@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Shooter</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.2">
 </head>
 
 <body>
@@ -19,11 +19,21 @@
                 style="position:absolute; top:90px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto;"
                 onclick="window.togglePauseManual()">PAUSE (P)</button>
             <button id="lang-toggle-btn-pause"
-                style="position:absolute; top:130px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff;"
-                onclick="window.toggleLanguage()">TÜRKÇE</button>
+                style="position:absolute; top:130px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff;">TÜRKÇE</button>
             <button id="music-toggle-btn"
-                style="position:absolute; top:170px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; width: 100px;"
-                onclick="window.toggleMusic()">🔊</button>
+                style="position:absolute; top:170px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; width: 60px;"
+                onclick="window.toggleMusic()">🎵</button>
+            <button id="sfx-toggle-btn"
+                style="position:absolute; top:210px; left:20px; padding:5px 15px; font-size:14px; pointer-events:auto; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; width: 60px;"
+                onclick="window.toggleSounds()">🔊</button>
+
+            <!-- Volume Sliders -->
+            <input type="range" class="music-vol-slider" min="0" max="1" step="0.05" value="0.5"
+                style="position:absolute; top:180px; left:90px; width:80px; accent-color:#fff; pointer-events:auto;"
+                oninput="window.setMusicVolume(this.value)">
+            <input type="range" class="sfx-vol-slider" min="0" max="1" step="0.05" value="0.5"
+                style="position:absolute; top:220px; left:90px; width:80px; accent-color:#fff; pointer-events:auto;"
+                oninput="window.setSoundsVolume(this.value)">
             <div id="player-status">
                 <div id="hp-bar-container">
                     <div id="hp-bar-fill"></div>
@@ -115,8 +125,22 @@
                 <button id="lang-toggle-btn"
                     style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px;">TÜRKÇE</button>
                 <button id="music-toggle-btn-start"
-                    style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px; width: 120px;"
-                    onclick="window.toggleMusic()">🔊</button>
+                    style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px; width: 80px;"
+                    title="Toggle Music" onclick="window.toggleMusic()">🎵</button>
+                <button id="sfx-toggle-btn-start"
+                    style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px; width: 80px;"
+                    title="Toggle Sound Effects" onclick="window.toggleSounds()">🔊</button>
+
+                <div
+                    style="margin-top:20px; display:flex; gap:10px; align-items:center; justify-content:center; color:#fff;">
+                    <span title="Music Volume">🎵</span> <input type="range" class="music-vol-slider" min="0" max="1"
+                        step="0.05" value="0.5" oninput="window.setMusicVolume(this.value)"
+                        style="width:100px; accent-color:#0ff; cursor:pointer;">
+                    <span style="margin-left:20px;" title="SFX Volume">🔊</span> <input type="range"
+                        class="sfx-vol-slider" min="0" max="1" step="0.05" value="0.5"
+                        oninput="window.setSoundsVolume(this.value)"
+                        style="width:100px; accent-color:#0f0; cursor:pointer;">
+                </div>
             </div>
 
             <div id="ship-selection-screen" class="hidden">
@@ -192,7 +216,7 @@
             </div>
         </div>
     </div>
-    <script src="game.js?v=fix8"></script>
+    <script src="game.js?v=fix25"></script>
 </body>
 
 </html>
