@@ -159,7 +159,6 @@ const empStatusElement = document.getElementById('emp-status');
 const shieldAbilityStatusElement = document.getElementById('shield-ability-status');
 const dashStatusElement = document.getElementById('dash-status');
 const shopScreen = document.getElementById('shop-screen');
-let shopGemsCount = document.getElementById('shop-gems-count');
 const closeShopBtn = document.getElementById('close-shop-btn');
 const langToggleBtn = document.getElementById('lang-toggle-btn');
 const langToggleBtnPause = document.getElementById('lang-toggle-btn-pause');
@@ -327,8 +326,8 @@ function updateSoundsUI() {
 function openShop() {
     g_isShopOpen = true;
     shopScreen.classList.remove('hidden');
-    shopGemsCount.innerText = g_credits;
-    // Update upgrade costs in UI if needed (dynamic later)
+    const gemsEl = document.getElementById('shop-gems-count');
+    if (gemsEl) gemsEl.innerText = g_credits;
     playSound('powerup');
     MusicManager.start('HANGAR');
 }
@@ -372,18 +371,14 @@ window.buyUpgrade = function (type) {
             g_bombs += 1;
             g_upgradeCosts.bombs = Math.ceil(g_upgradeCosts.bombs * 1.5);
         }
-
-        // Update UI - Shop
-        if (shopGemsCount) shopGemsCount.innerText = g_credits;
-        updatePlayerStatusUI();
-
-        // Update costs in shop buttons
-        const btn = document.querySelector(`#shop-item-${type} .cost`);
-        if (btn) btn.innerText = g_upgradeCosts[type];
         
-        // Also update header gems display if exists
-        const headerGems = document.getElementById('shop-gems-display');
-        if (headerGems) headerGems.innerText = g_credits;
+        // Update UI - Shop
+        const gemsEl = document.getElementById('shop-gems-count');
+        if (gemsEl) {
+            gemsEl.innerText = g_credits;
+            console.log('Updated gems to:', g_credits);
+        }
+        updatePlayerStatusUI();
     } else {
         playSound('hit');
     }
@@ -402,9 +397,8 @@ window.buyWeapon = function (type) {
         playSound('powerup');
         
         // Update UI
-        if (shopGemsCount) shopGemsCount.innerText = g_credits;
-        const headerGems = document.getElementById('shop-gems-display');
-        if (headerGems) headerGems.innerText = g_credits;
+        const gemsEl = document.getElementById('shop-gems-count');
+        if (gemsEl) gemsEl.innerText = g_credits;
         
         // Visual feedback
         createParticles(player.x + player.width/2, player.y + player.height/2, '#fff', 'explosion');
@@ -1001,6 +995,41 @@ const imgDiver = createSvgImg(`
 <path d="M 0,40 L -20,0 L -10,-40 L 0,-25 L 10,-40 L 20,0 Z" fill="url(#divGrad)" stroke="#f33" stroke-width="2.5"/>
 <circle cx="0" cy="15" r="6" fill="#f33" filter="url(#divGlow)"/>
 <path d="M -15,0 L -25,10 M 15,0 L 25,10" stroke="#f33" stroke-width="3" filter="url(#divGlow)"/>
+</svg>`);
+
+const imgSwarm = createSvgImg(`
+<svg width="60" height="60" viewBox="-30 -30 60 60" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="swarmGrad" x1="0" y1="-30" x2="0" y2="30"><stop offset="0%" stop-color="#38a169"/><stop offset="100%" stop-color="#1a202c"/></linearGradient>
+<filter id="swarmGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<path d="M 0,-25 L -20,10 L -10,15 L 0,5 L 10,15 L 20,10 Z" fill="url(#swarmGrad)" stroke="#68d391" stroke-width="1.5"/>
+<circle cx="0" cy="0" r="4" fill="#9ae6b4" filter="url(#swarmGlow)"/>
+<path d="M -15,5 L -25,20 M 15,5 L 25,20" stroke="#68d391" stroke-width="2"/>
+</svg>`);
+
+const imgHealer = createSvgImg(`
+<svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="healGrad" x1="0" y1="-40" x2="0" y2="40"><stop offset="0%" stop-color="#2f855a"/><stop offset="100%" stop-color="#1a202c"/></linearGradient>
+<filter id="healGlow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<path d="M 0,-35 L -25,0 L -15,30 L 0,20 L 15,30 L 25,0 Z" fill="url(#healGrad)" stroke="#48bb78" stroke-width="2"/>
+<circle cx="0" cy="5" r="12" fill="#9ae6b4" filter="url(#healGlow)"/>
+<path d="M -6,-2 L 6,-2 M 0,-8 L 0,0 M -6,2 L 6,2" stroke="#276749" stroke-width="2"/>
+<circle cx="-20" cy="-10" r="5" fill="#68d391" filter="url(#healGlow)"/>
+<circle cx="20" cy="-10" r="5" fill="#68d391" filter="url(#healGlow)"/>
+</svg>`);
+
+const imgCharger = createSvgImg(`
+<svg width="80" height="60" viewBox="-40 -30 80 60" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="chargeGrad" x1="-40" y1="0" x2="40" y2="0"><stop offset="0%" stop-color="#c05621"/><stop offset="100%" stop-color="#1a202c"/></linearGradient>
+<filter id="chargeGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<path d="M -40,0 L 30,-20 L 40,0 L 30,20 Z" fill="url(#chargeGrad)" stroke="#ed8936" stroke-width="2"/>
+<circle cx="25" cy="0" r="8" fill="#fbd38d" filter="url(#chargeGlow)"/>
+<path d="M -20,-15 L -30,-25 M -20,15 L -30,25" stroke="#ed8936" stroke-width="3"/>
 </svg>`);
 
 const imgAsteroid = createSvgImg(`
@@ -1967,6 +1996,12 @@ function spawnEnemy() {
         type = 'GHOST';
     } else if (g_wave >= 8 && rand < 0.3) {
         type = 'MINER';
+    } else if (g_wave >= 9 && rand < 0.4) {
+        type = 'SWARMER'; // NEW: Small fast swarm
+    } else if (g_wave >= 10 && rand < 0.5) {
+        type = 'HEALER'; // NEW: Heals nearby enemies
+    } else if (g_wave >= 11 && rand < 0.6) {
+        type = 'CHARGER'; // NEW: Charges horizontally
     } else if (rand > 0.6) {
         type = 'SINE';
     }
@@ -1974,6 +2009,7 @@ function spawnEnemy() {
     let eColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
     let eHp = initialHp;
     let eSpeed = (Math.random() * 1.5 + 1) * (1 + (g_wave * 0.05));
+    let special = null; // For special abilities
 
     if (type === 'DIVER') {
         eColor = '#f33'; // Bright Red
@@ -2003,6 +2039,18 @@ function spawnEnemy() {
         eColor = '#ff6600'; // Orange
         eHp *= 3;
         eSpeed = 2;
+    } else if (type === 'SWARMER') {
+        eColor = '#38a169'; // Green
+        eHp *= 0.5;
+        eSpeed *= 1.8;
+    } else if (type === 'HEALER') {
+        eColor = '#48bb78'; // Light Green
+        eHp *= 2;
+        eSpeed *= 0.6;
+    } else if (type === 'CHARGER') {
+        eColor = '#ed8936'; // Orange
+        eHp *= 2.5;
+        eSpeed *= 1.3;
     }
 
     let enemyData = {
@@ -2705,6 +2753,40 @@ function update() {
                     });
                     enemy.mineTimer = 180;
                 }
+            } else if (enemy.type === 'SWARMER') {
+                // Fast, erratic movement
+                enemy.y += enemy.speed;
+                enemy.x += Math.sin(frameCount * 0.2 + enemy.x) * 2;
+                // Occasionally dash forward
+                if (frameCount % 120 === 0) {
+                    enemy.y += 30;
+                }
+            } else if (enemy.type === 'HEALER') {
+                // Slow, stays at top of screen healing others
+                enemy.y += enemy.speed * 0.5;
+                if (enemy.y > 100) enemy.y = 100;
+                
+                // Heal nearby enemies
+                if (frameCount % 60 === 0) {
+                    enemies.forEach(nearby => {
+                        if (nearby === enemy || nearby.hp >= nearby.maxHp) return;
+                        const dist = Math.hypot(nearby.x - enemy.x, nearby.y - enemy.y);
+                        if (dist < 150) {
+                            nearby.hp = Math.min(nearby.maxHp, nearby.hp + 1);
+                            createParticles(nearby.x + nearby.width/2, nearby.y + nearby.height/2, '#48bb78', 'spark');
+                        }
+                    });
+                }
+            } else if (enemy.type === 'CHARGER') {
+                // Charge horizontally toward player
+                if (enemy.y < canvas.height * 0.3) {
+                    enemy.y += enemy.speed;
+                } else {
+                    enemy.x += enemy.speed * 2;
+                }
+                if (enemy.x < 0 || enemy.x > canvas.width - enemy.width) {
+                    enemy.x = Math.max(0, Math.min(canvas.width - enemy.width, enemy.x));
+                }
             } else {
                 // NORMAL, TANK, ASTEROID, Fragment
                 if (enemy.isFragment) {
@@ -3397,6 +3479,29 @@ function draw() {
             } else if (enemy.type === 'MINER') {
                 imgToDraw = imgTank; // Use tank as base for Miner
                 ctx.filter = 'hue-rotate(30deg) brightness(1.2)';
+            } else if (enemy.type === 'SWARMER') {
+                imgToDraw = imgSwarm;
+            } else if (enemy.type === 'HEALER') {
+                imgToDraw = imgHealer;
+                // Draw healing beam effect
+                if (frameCount % 30 < 15) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(72, 187, 120, 0.3)';
+                    ctx.lineWidth = 2;
+                    enemies.forEach(nearby => {
+                        if (nearby === enemy || nearby.hp >= nearby.maxHp) return;
+                        const dist = Math.hypot(nearby.x - enemy.x, nearby.y - enemy.y);
+                        if (dist < 150) {
+                            ctx.beginPath();
+                            ctx.moveTo(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                            ctx.lineTo(nearby.x + nearby.width/2, nearby.y + nearby.height/2);
+                            ctx.stroke();
+                        }
+                    });
+                    ctx.restore();
+                }
+            } else if (enemy.type === 'CHARGER') {
+                imgToDraw = imgCharger;
             } else if (enemy.type === 'ASTEROID' || enemy.type === 'METEOR') {
                 imgToDraw = imgAsteroid;
                 ctx.rotate(enemy.y * 0.02); // Asteroids rotate slow
