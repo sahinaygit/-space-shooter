@@ -41,6 +41,12 @@ const translations = {
         itemRepairDesc: "Restore 1 HP",
         itemBombsName: "Bomb Capacity",
         itemBombsDesc: "More Max Bombs",
+        itemPlasmaName: "Plasma Cannon",
+        itemPlasmaDesc: "Slow but high damage",
+        itemExplosiveName: "Explosive Rounds",
+        itemExplosiveDesc: "Area damage on hit",
+        itemLaserName: "Laser Beam",
+        itemLaserDesc: "Fast & precise",
         cost: "Cost:",
         pausedText: "PAUSED",
         resumeHint: "Press P or ESC to Resume",
@@ -94,6 +100,12 @@ const translations = {
         itemRepairDesc: "1 HP Yeniler",
         itemBombsName: "Bomba Kapasitesi",
         itemBombsDesc: "Max Bomba Sayısı",
+        itemPlasmaName: "Plazma Topu",
+        itemPlasmaDesc: "Yavaş ama yüksek hasar",
+        itemExplosiveName: "Patlayıcı Mermi",
+        itemExplosiveDesc: "Alan hasarı verir",
+        itemLaserName: "Lazer Işını",
+        itemLaserDesc: "Hızlı ve hassas",
         cost: "Maliyet:",
         pausedText: "DURAKLATILDI",
         resumeHint: "Devam etmek için P veya ESC'ye basın",
@@ -215,7 +227,10 @@ function updateLanguageUI() {
         { id: 'hp', name: t.itemHpName, desc: t.itemHpDesc },
         { id: 'speed', name: t.itemSpeedName, desc: t.itemSpeedDesc },
         { id: 'repair', name: t.itemRepairName, desc: t.itemRepairDesc },
-        { id: 'bombs', name: t.itemBombsName, desc: t.itemBombsDesc }
+        { id: 'bombs', name: t.itemBombsName, desc: t.itemBombsDesc },
+        { id: 'plasma', name: t.itemPlasmaName, desc: t.itemPlasmaDesc },
+        { id: 'explosive', name: t.itemExplosiveName, desc: t.itemExplosiveDesc },
+        { id: 'laser', name: t.itemLaserName, desc: t.itemLaserDesc }
     ];
     items.forEach(item => {
         const div = document.getElementById(`shop-item-${item.id}`);
@@ -339,7 +354,7 @@ window.buyUpgrade = function (type) {
         // Apply Upgrade
         if (type === 'hp') {
             player.maxHp += 1;
-            player.hp += 1; // Bonus heal
+            player.hp += 1;
             g_upgradeCosts.hp = Math.ceil(g_upgradeCosts.hp * 1.5);
         } else if (type === 'speed') {
             player.speed += 0.5;
@@ -347,28 +362,54 @@ window.buyUpgrade = function (type) {
         } else if (type === 'repair') {
             if (player.hp < player.maxHp) {
                 player.hp = Math.min(player.maxHp, player.hp + 1);
-                // Repairs don't scale cost as aggressively? Or at all?
-                // Let's keep it 5 but maybe scale a bit to prevent spamming
                 g_upgradeCosts.repair += 2;
             } else {
-                g_credits += cost; // Refund
+                g_credits += cost;
                 return;
             }
         } else if (type === 'bombs') {
             g_maxBombs += 1;
-            g_bombs += 1; // Bonus bomb
+            g_bombs += 1;
             g_upgradeCosts.bombs = Math.ceil(g_upgradeCosts.bombs * 1.5);
         }
 
-        // Update UI
-        shopGemsCount.innerText = g_credits;
+        // Update UI - Shop
+        if (shopGemsCount) shopGemsCount.innerText = g_credits;
         updatePlayerStatusUI();
 
         // Update costs in shop buttons
         const btn = document.querySelector(`#shop-item-${type} .cost`);
         if (btn) btn.innerText = g_upgradeCosts[type];
+        
+        // Also update header gems display if exists
+        const headerGems = document.getElementById('shop-gems-display');
+        if (headerGems) headerGems.innerText = g_credits;
     } else {
-        playSound('hit'); // Error sound
+        playSound('hit');
+    }
+};
+
+window.buyWeapon = function (type) {
+    const cost = g_upgradeCosts[type];
+    if (g_credits >= cost) {
+        // If already owned, don't buy again
+        if (player.weaponType === type) {
+            playSound('hit');
+            return;
+        }
+        g_credits -= cost;
+        player.weaponType = type;
+        playSound('powerup');
+        
+        // Update UI
+        if (shopGemsCount) shopGemsCount.innerText = g_credits;
+        const headerGems = document.getElementById('shop-gems-display');
+        if (headerGems) headerGems.innerText = g_credits;
+        
+        // Visual feedback
+        createParticles(player.x + player.width/2, player.y + player.height/2, '#fff', 'explosion');
+    } else {
+        playSound('hit');
     }
 };
 
@@ -1103,6 +1144,7 @@ const player = {
     maxHp: 5,
     shield: 0, // 0 to 1
     weaponLevel: 1,
+    weaponType: 'normal', // normal, plasma, explosive, laser
     gemsCollected: 0,
     invulnerableTime: 0,
     activePowerup: null, // { type: 'SPREAD', timer: 300 }
@@ -1121,7 +1163,10 @@ let g_upgradeCosts = {
     hp: 10,
     speed: 15,
     repair: 5,
-    bombs: 20
+    bombs: 20,
+    plasma: 50,
+    explosive: 75,
+    laser: 100
 };
 const g_maxBombsBase = 3;
 let g_maxBombs = 3;
@@ -1230,9 +1275,16 @@ function updateComboUI() {
     }
 }
 
-function triggerShake(frames) {
+function triggerShake(frames, intensity = 1) {
     g_shakeTime = frames;
     gameContainer.classList.add('shake');
+    
+    if (intensity > 0.7) {
+        gameContainer.classList.add('screen-flash');
+        setTimeout(() => {
+            gameContainer.classList.remove('screen-flash');
+        }, 200);
+    }
 }
 
 function showWaveUI(text, isWarning = false) {
@@ -1258,7 +1310,7 @@ function useBomb() {
     if (g_bombs > 0 && gameState === 'PLAYING') {
         g_bombs--;
         playSound('bomb');
-        triggerShake(30);
+        triggerShake(40, 1);
         updatePlayerStatusUI();
 
         bullets = bullets.filter(b => !b.isEnemy);
@@ -1530,15 +1582,38 @@ function clearSave() {
 
 function initStars() {
     stars = [];
-    for (let i = 0; i < 150; i++) {
-        const isMeteor = Math.random() < 0.15;
+    for (let i = 0; i < 200; i++) {
+        const isMeteor = Math.random() < 0.1;
+        const layer = Math.random();
+        let speed, size, color, alpha;
+        
+        if (layer < 0.6) {
+            speed = Math.random() * 0.3 + 0.1;
+            size = Math.random() * 1 + 0.5;
+            color = 'rgba(255, 255, 255, 0.4)';
+            alpha = 0.4;
+        } else if (layer < 0.9) {
+            speed = Math.random() * 0.8 + 0.4;
+            size = Math.random() * 1.5 + 1;
+            color = 'rgba(200, 220, 255, 0.7)';
+            alpha = 0.7;
+        } else {
+            speed = Math.random() * 1.5 + 1;
+            size = Math.random() * 2 + 1.5;
+            color = isMeteor ? '#ff6b35' : 'rgba(255, 255, 255, 1)';
+            alpha = 1;
+        }
+        
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
-            size: isMeteor ? Math.random() * 3 + 2 : Math.random() * 2,
-            speed: isMeteor ? Math.random() * 3 + 2 : Math.random() * 1 + 0.1,
+            size: size,
+            speed: isMeteor ? speed * 3 : speed,
             isMeteor: isMeteor,
-            color: isMeteor ? '#555' : 'white'
+            color: color,
+            alpha: alpha,
+            layer: layer,
+            twinkle: Math.random() > 0.95
         });
     }
 }
@@ -1546,7 +1621,12 @@ function initStars() {
 function updateStars() {
     stars.forEach(star => {
         star.y += star.speed;
-        if (star.isMeteor) star.x += star.speed * 0.3; // drift right
+        if (star.isMeteor) star.x += star.speed * 0.3;
+        
+        if (star.twinkle) {
+            star.alpha = 0.3 + Math.abs(Math.sin(frameCount * 0.05 + star.x)) * 0.7;
+        }
+        
         if (star.y > canvas.height || star.x > canvas.width) {
             star.y = 0;
             star.x = Math.random() * canvas.width;
@@ -1602,7 +1682,7 @@ function drawPlanets() {
 function drawStars() {
     stars.forEach(star => {
         ctx.fillStyle = star.color;
-        ctx.globalAlpha = star.isMeteor ? 1.0 : star.speed / 1.5;
+        ctx.globalAlpha = star.alpha;
         ctx.beginPath();
         if (star.isMeteor) {
             ctx.rect(star.x, star.y, star.size, star.size * 2);
@@ -1610,6 +1690,13 @@ function drawStars() {
             ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         }
         ctx.fill();
+        
+        if (star.layer > 0.85 && !star.isMeteor) {
+            ctx.globalAlpha = star.alpha * 0.3;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
     });
     ctx.globalAlpha = 1.0;
 }
@@ -1728,13 +1815,25 @@ function victory() {
 function shoot() {
     playSound('shoot');
     const lvl = player.weaponLevel;
-    let bColor, bSpeed, bWidth, bHeight, bDamage;
-    if (lvl >= 5) {
-        bColor = '#ff0080'; bSpeed = 14; bWidth = 7; bHeight = 22; bDamage = 3;
-    } else if (lvl === 4) {
-        bColor = '#f0f'; bSpeed = 12; bWidth = 6; bHeight = 20; bDamage = 2;
+    const wType = player.weaponType;
+    let bColor, bSpeed, bWidth, bHeight, bDamage, bIsExplosive = false;
+    
+    // Weapon type effects
+    if (wType === 'plasma') {
+        bColor = '#00ffff'; bSpeed = 5; bWidth = 12; bHeight = 12; bDamage = lvl * 2;
+    } else if (wType === 'laser') {
+        bColor = '#ffffff'; bSpeed = 18; bWidth = 3; bHeight = 35; bDamage = lvl;
+    } else if (wType === 'explosive') {
+        bColor = '#ff6600'; bSpeed = 8; bWidth = 8; bHeight = 8; bDamage = lvl + 1; bIsExplosive = true;
     } else {
-        bColor = '#ff0'; bSpeed = 7; bWidth = 4; bHeight = 15; bDamage = 1;
+        // Normal weapons based on level
+        if (lvl >= 5) {
+            bColor = '#ff0080'; bSpeed = 14; bWidth = 7; bHeight = 22; bDamage = 3;
+        } else if (lvl === 4) {
+            bColor = '#f0f'; bSpeed = 12; bWidth = 6; bHeight = 20; bDamage = 2;
+        } else {
+            bColor = '#ff0'; bSpeed = 7; bWidth = 4; bHeight = 15; bDamage = 1;
+        }
     }
 
     const spawnBullet = (xOffset, yOffset, vx, isHoming = false) => {
@@ -1748,10 +1847,12 @@ function shoot() {
             hp: bDamage,
             vx: vx,
             vy: -1,
-            isHoming: isHoming
+            isHoming: isHoming,
+            isExplosive: bIsExplosive,
+            weaponType: wType
         });
 
-        // Muzzle Flash at bullet spawn point
+        // Muzzle Flash
         muzzleFlashes.push({
             x: player.x + xOffset + (isHoming ? bWidth * 1.5 : bWidth) / 2,
             y: player.y + yOffset,
@@ -1956,7 +2057,7 @@ function createParticles(x, y, color, type = 'normal') {
             y: y,
             vx: type === 'exhaust' ? (Math.random() - 0.5) * 1 : (Math.random() - 0.5) * (isExplosion ? 8 : (isSpark ? 12 : 5)),
             vy: type === 'exhaust' ? Math.random() * 2 + 1 : (Math.random() - 0.5) * (isExplosion ? 8 : (isSpark ? 12 : 5)),
-            size: type === 'exhaust' ? Math.random() * 5 + 2 : (isExplosion ? Math.random() * 5 + 1 : (isSpark ? Math.random() * 2 : Math.random() * 3 + 1)),
+            size: Math.max(0.5, type === 'exhaust' ? Math.random() * 5 + 2 : (isExplosion ? Math.random() * 5 + 1 : (isSpark ? Math.random() * 2 : Math.random() * 3 + 1))),
             color: color,
             life: 1.0,
             decay: type === 'exhaust' ? 0.02 + Math.random() * 0.02 : (isExplosion ? 0.015 : (isSpark ? 0.08 : 0.02)),
@@ -1986,6 +2087,14 @@ function update() {
         if (frameCount % 2 === 0) {
             createParticles(player.x + player.width / 2, player.y + player.height / 2, '#0ff');
         }
+    }
+
+    // Engine exhaust
+    if (frameCount % 2 === 0) {
+        createParticles(player.x + 10, player.y + player.height - 5, 'rgba(150, 150, 150, 0.4)', 'exhaust');
+        createParticles(player.x + 10, player.y + player.height - 5, 'rgba(0, 255, 255, 0.6)', 'exhaust');
+        createParticles(player.x + player.width - 10, player.y + player.height - 5, 'rgba(150, 150, 150, 0.4)', 'exhaust');
+        createParticles(player.x + player.width - 10, player.y + player.height - 5, 'rgba(0, 255, 255, 0.6)', 'exhaust');
     }
 
     if (player.invulnerableTime > 0) {
@@ -2703,7 +2812,8 @@ function update() {
             updateScoreUI();
             createParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, '#f00', 'boss_explosion');
             createParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, '#ff0', 'boss_explosion');
-            triggerShake(60);
+            createParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, '#fff', 'explosion');
+            triggerShake(80, 1);
             playSound('boss_explosion'); // Epic finale
             const isMothership = boss.type === 'MOTHERSHIP';
             boss = null;
@@ -2742,8 +2852,25 @@ function update() {
             ) {
                 // Hit
                 bullets.splice(bIndex, 1);
+                
+                // Explosive bullet area damage
+                if (bullet.isExplosive) {
+                    createParticles(bullet.x, bullet.y, '#ff6600', 'explosion');
+                    triggerShake(8);
+                    // Area damage to nearby enemies
+                    enemies.forEach(nearby => {
+                        if (nearby === enemy) return;
+                        const dist = Math.hypot(nearby.x - enemy.x, nearby.y - enemy.y);
+                        if (dist < 80) {
+                            nearby.hp -= bullet.hp * 0.5;
+                            createParticles(nearby.x + nearby.width/2, nearby.y + nearby.height/2, '#ff6600', 'spark');
+                        }
+                    });
+                } else {
+                    createParticles(bullet.x, bullet.y, '#fff', 'spark');
+                }
+                
                 enemy.hp -= bullet.hp;
-                createParticles(bullet.x, bullet.y, '#fff', 'spark'); // Hit sparks
 
                 if (enemy.hp <= 0) {
                     enemies.splice(eIndex, 1);
@@ -2882,13 +3009,18 @@ function update() {
 
     updateScoreUI();
 
-    // Update particles (Life/Movement already handled, but let's ensure cleanup)
+    // Update particles
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.life -= p.decay || 0.02;
-        if (p.life <= 0) particles.splice(i, 1);
+        
+        if (p.size > 0) {
+            p.size *= 0.98;
+        }
+        
+        if (p.life <= 0 || p.size <= 0.1) particles.splice(i, 1);
     }
 
     frameCount++;
@@ -3412,24 +3544,15 @@ function draw() {
             if (p.life <= 0) particles.splice(i, 1);
         }
 
-        // Exhaust smoke/fire effect
-        if (frameCount % 2 === 0) {
-            // Left engine
-            createParticles(player.x + 10, player.y + player.height - 5, 'rgba(150, 150, 150, 0.4)', 'exhaust');
-            createParticles(player.x + 10, player.y + player.height - 5, 'rgba(0, 255, 255, 0.6)', 'exhaust');
-            // Right engine
-            createParticles(player.x + player.width - 10, player.y + player.height - 5, 'rgba(150, 150, 150, 0.4)', 'exhaust');
-            createParticles(player.x + player.width - 10, player.y + player.height - 5, 'rgba(0, 255, 255, 0.6)', 'exhaust');
-            // Draw particles
-            particles.forEach(p => {
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1.0;
-        }
+        // Draw particles
+        particles.forEach(p => {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1.0;
 
         // Draw Muzzle Flashes
         muzzleFlashes.forEach(f => {
