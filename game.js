@@ -234,10 +234,10 @@ function updateLanguageUI() {
     items.forEach(item => {
         const div = document.getElementById(`shop-item-${item.id}`);
         if (div) {
-            div.querySelector('h3').innerText = item.name;
-            div.querySelector('p').innerText = item.desc;
-            const b = div.querySelector('.buy-btn');
-            b.innerHTML = `${t.cost} <span class="cost">${g_upgradeCosts[item.id]}</span>`;
+            const h3 = div.querySelector('h3');
+            const descDiv = div.querySelector('div:not(.item-icon)');
+            if (h3) h3.innerText = item.name;
+            if (descDiv && descDiv.style.fontSize === '9px') descDiv.innerText = `${item.desc} ${g_upgradeCosts[item.id]}`;
         }
     });
 
@@ -332,16 +332,13 @@ function openShop() {
     MusicManager.start('HANGAR');
 }
 
-function closeShop() {
+window.closeShop = function() {
+    console.log('closeShop called');
     g_isShopOpen = false;
     shopScreen.classList.add('hidden');
     // Start next wave
     startNextWaveReady();
     MusicManager.start('COMBAT');
-}
-
-if (closeShopBtn) {
-    closeShopBtn.addEventListener('click', closeShop);
 }
 
 window.buyUpgrade = function (type) {
@@ -1283,22 +1280,23 @@ function updatePlayerStatusUI() {
 
 function updateBossUI() {
     if (!boss) {
-        bossUI.style.display = 'none';
+        if (bossUI) bossUI.style.display = 'none';
         return;
     }
     const t = translations[g_lang];
-    document.getElementById('boss-name').innerText = t.warning.split(': ')[1] || 'MOTHERSHIP';
-    bossUI.style.display = 'block';
+    const bossNameEl = document.getElementById('boss-name');
+    if (bossNameEl) bossNameEl.innerText = t.warning.split(': ')[1] || 'MOTHERSHIP';
+    if (bossUI) bossUI.style.display = 'block';
     const hpRatio = Math.max(0, boss.hp / boss.maxHp) * 100;
     bossHpFill.style.width = `${hpRatio}%`;
 }
 
 function updateComboUI() {
-    if (g_combo > 0 && g_comboMultiplier > 1) {
+    if (g_combo > 0 && g_comboMultiplier > 1 && comboUI) {
         comboUI.style.display = 'block';
         const t = translations[g_lang];
-        comboText.innerText = `${t.combo} x${g_comboMultiplier}`;
-    } else {
+        if (comboText) comboText.innerText = `${t.combo} x${g_comboMultiplier}`;
+    } else if (comboUI) {
         comboUI.style.display = 'none';
         comboUI.style.transform = 'scale(1)';
     }
@@ -1326,12 +1324,14 @@ function showWaveUI(text, isWarning = false) {
         displayText = t.warning;
     }
 
-    waveUI.style.opacity = '1';
-    waveText.innerText = displayText;
-    waveText.style.color = isWarning ? '#f00' : '#0ff';
+    if (waveUI) waveUI.style.opacity = '1';
+    if (waveText) {
+        waveText.innerText = displayText;
+        waveText.style.color = isWarning ? '#f00' : '#0ff';
+    }
     if (isWarning) playSound('warning');
     setTimeout(() => {
-        waveUI.style.opacity = '0';
+        if (waveUI) waveUI.style.opacity = '0';
     }, 2000);
 }
 
@@ -3155,19 +3155,25 @@ function drawPlayer() {
     ctx.shadowBlur = 15;
     ctx.shadowColor = '#0ff';
 
-    if (imgPlayerV2.complete && imgPlayerV2.naturalWidth !== 0) {
-        ctx.drawImage(imgPlayerV2, -player.width / 2 - 10, -player.height / 2 - 10, player.width + 20, player.height + 20);
-    } else {
-        ctx.fillStyle = player.color;
-        // Draw a spaceship shape fallback
-        ctx.beginPath();
-        ctx.moveTo(0, -player.height / 2);
-        ctx.lineTo(player.width / 2, player.height / 2);
-        ctx.lineTo(0, player.height / 2 - 10);
-        ctx.lineTo(-player.width / 2, player.height / 2);
-        ctx.closePath();
-        ctx.fill();
-    }
+    // Always use fallback shape for reliability
+    ctx.fillStyle = player.color || '#0ff';
+    // Draw a spaceship shape
+    ctx.beginPath();
+    ctx.moveTo(0, -player.height / 2);
+    ctx.lineTo(player.width / 2, player.height / 2);
+    ctx.lineTo(0, player.height / 2 - 10);
+    ctx.lineTo(-player.width / 2, player.height / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Add engine glow
+    ctx.fillStyle = '#ff6600';
+    ctx.beginPath();
+    ctx.moveTo(-5, player.height / 2 - 5);
+    ctx.lineTo(5, player.height / 2 - 5);
+    ctx.lineTo(0, player.height / 2 + 10 + Math.random() * 5);
+    ctx.closePath();
+    ctx.fill();
 
     ctx.shadowBlur = 0;
     ctx.restore();
@@ -3737,6 +3743,16 @@ updateLanguageUI();
 updateMusicUI();
 updateSoundsUI();
 updateScoreUI();
+
+// Ensure close button works
+const closeBtn = document.getElementById('close-shop-btn');
+if (closeBtn) {
+    closeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.closeShop();
+    });
+}
 
 initStars();
 loop();

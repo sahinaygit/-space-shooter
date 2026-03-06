@@ -182,8 +182,7 @@ canvas {
 }
 
 .hidden {
-    opacity: 0;
-    pointer-events: none !important;
+    display: none !important;
 }
 
 h1 {
@@ -255,7 +254,14 @@ button:hover {
     backdrop-filter: blur(10px);
     pointer-events: auto;
     z-index: 100;
-    overflow-y: auto;
+    overflow: visible;
+}
+
+#close-shop-btn {
+    pointer-events: auto !important;
+    cursor: pointer;
+    z-index: 200 !important;
+    position: relative;
 }
 
 #shop-screen h1 {
@@ -268,47 +274,31 @@ button:hover {
 }
 
 .shop-grid {
-    margin-bottom: 20px;
-}
-
-#close-shop-btn {
-    margin-top: 20px;
-    margin-bottom: 40px;
-}
-
-#shop-gems-display {
-    font-size: 24px;
-    color: #ff0;
-    text-shadow: 0 0 10px #ff0;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-.shop-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    max-width: 700px;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 20px;
+    overflow-x: auto;
 }
 
 .shop-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 15px;
-    text-align: center;
-    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 120px;
-}
-
-.shop-item:hover {
-    background: rgba(0, 255, 255, 0.1);
-    transform: translateY(-5px);
-    border-color: #0ff;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    justify-content: center;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    min-width: 130px;
+    max-width: 130px;
+    height: 130px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
 }
 
 .item-icon {

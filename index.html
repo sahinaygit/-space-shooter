@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Shooter</title>
-    <link rel="stylesheet" href="style.css?v=1.2">
+    <link rel="stylesheet" href="style.css?v=onerow">
 </head>
 
 <body>
@@ -84,58 +84,43 @@
                 <div id="shop-gems-display"><span id="shop-credits-label">Credits:</span> <span
                         id="shop-gems-count">0</span> <span id="shop-gems-suffix">Gems</span></div>
                 <div class="shop-grid">
-                    <div class="shop-item" id="shop-item-hp">
-                        <div class="item-icon">➕</div>
-                        <h3>Hull Integrity</h3>
-                        <p>Increase Max HP</p>
-                        <button class="buy-btn" onclick="window.buyUpgrade('hp')">Cost: <span
-                                class="cost">10</span></button>
+                    <div class="shop-item" id="shop-item-hp" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">➕</div>
+                        <h3 style="font-size:14px;margin:3px;">Hull</h3>
+                        <div style="font-size:12px;">10</div>
                     </div>
-                    <div class="shop-item" id="shop-item-speed">
-                        <div class="item-icon">⚡</div>
-                        <h3>Overclock</h3>
-                        <p>Increase Move Speed</p>
-                        <button class="buy-btn" onclick="window.buyUpgrade('speed')">Cost: <span
-                                class="cost">15</span></button>
+                    <div class="shop-item" id="shop-item-speed" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">⚡</div>
+                        <h3 style="font-size:14px;margin:3px;">Speed</h3>
+                        <div style="font-size:12px;">15</div>
                     </div>
-                    <div class="shop-item" id="shop-item-repair">
-                        <div class="item-icon">🛠️</div>
-                        <h3>Nano-Repair</h3>
-                        <p>Restore 1 HP</p>
-                        <button class="buy-btn" onclick="window.buyUpgrade('repair')">Cost: <span
-                                class="cost">5</span></button>
+                    <div class="shop-item" id="shop-item-repair" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">🛠️</div>
+                        <h3 style="font-size:14px;margin:3px;">Repair</h3>
+                        <div style="font-size:12px;">5</div>
                     </div>
-                    <div class="shop-item" id="shop-item-bombs">
-                        <div class="item-icon">💣</div>
-                        <h3>Bomb Capacity</h3>
-                        <p>More Max Bombs</p>
-                        <button class="buy-btn" onclick="window.buyUpgrade('bombs')">Cost: <span
-                                class="cost">20</span></button>
+                    <div class="shop-item" id="shop-item-bombs" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">💣</div>
+                        <h3 style="font-size:14px;margin:3px;">Bomb</h3>
+                        <div style="font-size:12px;">20</div>
                     </div>
-                    <div class="shop-item" id="shop-item-plasma">
-                        <div class="item-icon">🔵</div>
-                        <h3>Plasma Cannon</h3>
-                        <p>Slow but high damage</p>
-                        <button class="buy-btn" onclick="window.buyWeapon('plasma')">Cost: <span
-                                class="cost">50</span></button>
+                    <div class="shop-item" id="shop-item-plasma" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">🔵</div>
+                        <h3 style="font-size:14px;margin:3px;">Plasma</h3>
+                        <div style="font-size:12px;">50</div>
                     </div>
-                    <div class="shop-item" id="shop-item-explosive">
-                        <div class="item-icon">🟠</div>
-                        <h3>Explosive Rounds</h3>
-                        <p>Area damage</p>
-                        <button class="buy-btn" onclick="window.buyWeapon('explosive')">Cost: <span
-                                class="cost">75</span></button>
+                    <div class="shop-item" id="shop-item-explosive" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">🟠</div>
+                        <h3 style="font-size:14px;margin:3px;">Explos.</h3>
+                        <div style="font-size:12px;">75</div>
                     </div>
-                    <div class="shop-item" id="shop-item-laser">
-                        <div class="item-icon">⚪</div>
-                        <h3>Laser Beam</h3>
-                        <p>Fast & precise</p>
-                        <button class="buy-btn" onclick="window.buyWeapon('laser')">Cost: <span
-                                class="cost">100</span></button>
+                    <div class="shop-item" id="shop-item-laser" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                        <div class="item-icon" style="font-size:32px;">⚪</div>
+                        <h3 style="font-size:14px;margin:3px;">Laser</h3>
+                        <div style="font-size:12px;">100</div>
                     </div>
                 </div>
-                <button id="close-shop-btn"
-                    style="margin-top: 30px; background: #0f0; box-shadow: 0 0 15px #0f0;">Resume Mission</button>
+                <button id="close-shop-btn" style="pointer-events:auto;margin-top:30px;background:#0f0;box-shadow:0 0 15px #0f0;cursor:pointer;font-size:18px;padding:12px 30px;">Resume Mission</button>
             </div>
 
             <div id="start-screen">
