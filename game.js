@@ -325,16 +325,52 @@ function updateSoundsUI() {
 
 function openShop() {
     g_isShopOpen = true;
+    window.isPausedGlobal = true;
     shopScreen.classList.remove('hidden');
+    
+    // Update gems display
     const gemsEl = document.getElementById('shop-gems-count');
     if (gemsEl) gemsEl.innerText = g_credits;
+    
+    // Update displayed costs
+    document.getElementById('shop-item-hp').querySelector('div:last-child').innerText = g_upgradeCosts.hp;
+    document.getElementById('shop-item-speed').querySelector('div:last-child').innerText = g_upgradeCosts.speed;
+    document.getElementById('shop-item-repair').querySelector('div:last-child').innerText = g_upgradeCosts.repair;
+    document.getElementById('shop-item-bombs').querySelector('div:last-child').innerText = g_upgradeCosts.bombs;
+    
+    // Add event listeners for shop items
+    const shopItems = [
+        { id: 'shop-item-hp', type: 'hp', fn: window.buyUpgrade },
+        { id: 'shop-item-speed', type: 'speed', fn: window.buyUpgrade },
+        { id: 'shop-item-repair', type: 'repair', fn: window.buyUpgrade },
+        { id: 'shop-item-bombs', type: 'bombs', fn: window.buyUpgrade },
+        { id: 'shop-item-plasma', type: 'plasma', fn: window.buyWeapon },
+        { id: 'shop-item-explosive', type: 'explosive', fn: window.buyWeapon },
+        { id: 'shop-item-laser', type: 'laser', fn: window.buyWeapon }
+    ];
+    
+    shopItems.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) {
+            el.onclick = function() { item.fn(item.type); };
+            el.onmouseover = function() { 
+                this.style.background = 'rgba(0,255,255,0.3)';
+                this.style.borderColor = '#0ff';
+            };
+            el.onmouseout = function() { 
+                this.style.background = 'rgba(255,255,255,0.05)';
+                this.style.borderColor = 'rgba(255,255,255,0.2)';
+            };
+        }
+    });
+    
     playSound('powerup');
     MusicManager.start('HANGAR');
 }
 
 window.closeShop = function() {
-    console.log('closeShop called');
     g_isShopOpen = false;
+    window.isPausedGlobal = false; // Resume the game
     shopScreen.classList.add('hidden');
     // Start next wave
     startNextWaveReady();
@@ -348,7 +384,7 @@ window.buyUpgrade = function (type) {
         playSound('powerup');
 
         // Apply Upgrade
-        if (type === 'hp') {
+        'hp') {
             player.maxHp += 1;
             player.hp += 1;
             g_upgradeCosts.hp = Math.ceil(g_upgradeCosts.hp * 1.5);
@@ -369,13 +405,18 @@ window.buyUpgrade = function (type) {
             g_upgradeCosts.bombs = Math.ceil(g_upgradeCosts.bombs * 1.5);
         }
         
-        // Update UI - Shop
-        const gemsEl = document.getElementById('shop-gems-count');
-        if (gemsEl) {
-            gemsEl.innerText = g_credits;
-            console.log('Updated gems to:', g_credits);
+        // Update UI - with alert for debugging
+        try {
+            document.getElementById('shop-gems-count').innerText = g_credits;
+            const itemEl = document.getElementById('shop-item-' + type);
+            if (itemEl) {
+                itemEl.querySelector('div:last-child').innerText = g_upgradeCosts[type];
+            }
+        } catch(e) {
+            alert('Error updating UI: ' + e.message);
         }
         updatePlayerStatusUI();
+        saveGame();
     } else {
         playSound('hit');
     }
@@ -384,7 +425,6 @@ window.buyUpgrade = function (type) {
 window.buyWeapon = function (type) {
     const cost = g_upgradeCosts[type];
     if (g_credits >= cost) {
-        // If already owned, don't buy again
         if (player.weaponType === type) {
             playSound('hit');
             return;
@@ -393,12 +433,9 @@ window.buyWeapon = function (type) {
         player.weaponType = type;
         playSound('powerup');
         
-        // Update UI
-        const gemsEl = document.getElementById('shop-gems-count');
-        if (gemsEl) gemsEl.innerText = g_credits;
-        
-        // Visual feedback
+        document.getElementById('shop-gems-count').innerText = g_credits;
         createParticles(player.x + player.width/2, player.y + player.height/2, '#fff', 'explosion');
+        saveGame();
     } else {
         playSound('hit');
     }
@@ -857,30 +894,45 @@ function calculateEnemiesForWave(wave) {
 // Assets
 const bossImg = new Image(); bossImg.src = 'assets/boss_ship.png';
 
-// Premium SVG Player Ship
-const imgPlayerV2 = createSvgImg(`
+// Premium SVG Player Ship - Balanced (Cyan/Teal)
+const imgPlayerBalanced = createSvgImg(`
 <svg width="100" height="100" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <linearGradient id="hullGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#4fd1c5;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#2d3748;stop-opacity:1" />
-        </linearGradient>
-        <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-    </defs>
-    <!-- Main Hull -->
-    <path d="M 0,-45 L 15,-10 L 40,20 L 15,15 L 0,40 L -15,15 L -40,20 L -15,-10 Z" fill="url(#hullGrad)" stroke="#fff" stroke-width="1"/>
-    <!-- Cockpit -->
-    <ellipse cx="0" cy="-5" rx="8" ry="15" fill="#e6fffa" filter="url(#neonGlow)"/>
-    <!-- Wings/Engines Details -->
+    <path d="M 0,-45 L 15,-10 L 40,20 L 15,15 L 0,40 L -15,15 L -40,20 L -15,-10 Z" fill="#4fd1c5" stroke="#fff" stroke-width="1"/>
+    <ellipse cx="0" cy="-5" rx="8" ry="15" fill="#e6fffa"/>
     <path d="M -35,15 L -45,25 L -35,30 Z" fill="#4fd1c5"/>
     <path d="M 35,15 L 45,25 L 35,30 Z" fill="#4fd1c5"/>
-    <!-- Engine Ports (Where smoke comes from) -->
     <rect x="-18" y="15" width="8" height="12" rx="2" fill="#1a202c" stroke="#0ff" stroke-width="1"/>
     <rect x="10" y="15" width="8" height="12" rx="2" fill="#1a202c" stroke="#0ff" stroke-width="1"/>
 </svg>`);
+
+// Speed Ship - Green/Sleek
+const imgPlayerSpeed = createSvgImg(`
+<svg width="100" height="100" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0,-48 L 12,-10 L 35,25 L 12,18 L 0,45 L -12,18 L -35,25 L -12,-10 Z" fill="#48bb78" stroke="#fff" stroke-width="1"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#c6f6d5"/>
+    <path d="M -30,20 L -40,32 L -28,35 Z" fill="#48bb78"/>
+    <path d="M 30,20 L 40,32 L 28,35 Z" fill="#48bb78"/>
+    <path d="M -15,20 L -22,35 L -10,38 Z" fill="#48bb78"/>
+    <path d="M 15,20 L 22,35 L 10,38 Z" fill="#48bb78"/>
+    <rect x="-12" y="22" width="6" height="15" rx="2" fill="#1a202c" stroke="#0f0" stroke-width="1"/>
+    <rect x="6" y="22" width="6" height="15" rx="2" fill="#1a202c" stroke="#0f0" stroke-width="1"/>
+</svg>`);
+
+// Heavy Ship - Red/Bulky
+const imgPlayerHeavy = createSvgImg(`
+<svg width="100" height="100" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0,-42 L 20,-15 L 45,25 L 20,20 L 5,45 L -5,45 L -20,20 L -45,25 L -20,-15 Z" fill="#e53e3e" stroke="#fff" stroke-width="1"/>
+    <rect x="-25" y="-10" width="50" height="25" rx="5" fill="#742a2a" stroke="#e53e3e" stroke-width="1"/>
+    <ellipse cx="0" cy="0" rx="10" ry="8" fill="#feb2b2"/>
+    <rect x="-40" y="10" width="15" height="25" rx="3" fill="#742a2a" stroke="#e53e3e" stroke-width="1"/>
+    <rect x="25" y="10" width="15" height="25" rx="3" fill="#742a2a" stroke="#e53e3e" stroke-width="1"/>
+    <rect x="-8" y="18" width="16" height="20" rx="2" fill="#1a202c" stroke="#f00" stroke-width="1"/>
+    <path d="M -45,25 L -50,35 L -40,38 Z" fill="#e53e3e"/>
+    <path d="M 45,25 L 50,35 L 40,38 Z" fill="#e53e3e"/>
+</svg>`);
+
+// Current ship type
+let g_selectedShipType = 'balanced';
 
 // Debug accessibility & Reliability
 window.isPausedGlobal = false;
@@ -1538,6 +1590,9 @@ window.selectShip = function (type) {
     g_maxBombs = 3;
     g_bombs = 3;
 
+    // Set ship type for visual
+    g_selectedShipType = type;
+
     // Apply ship modifiers
     if (type === 'balanced') {
         player.maxHp = 5;
@@ -1596,7 +1651,10 @@ function saveGame() {
         music: g_musicEnabled,
         sounds: g_soundsEnabled,
         musicVol: g_musicVolume,
-        soundsVol: g_soundsVolume
+        soundsVolume: g_soundsVolume,
+        shipType: g_selectedShipType,
+        credits: g_credits,
+        upgradeCosts: g_upgradeCosts
     };
     localStorage.setItem('spaceShooterSave', JSON.stringify(data));
     // Update both continue buttons
@@ -1775,6 +1833,18 @@ function startGame(loadSave = false) {
         player.weaponLevel = data.weaponLevel;
         player.gemsCollected = data.gemsCollected;
         g_bombs = data.bombs;
+        // Load ship type
+        if (data.shipType) {
+            g_selectedShipType = data.shipType;
+        }
+        // Load credits
+        if (data.credits !== undefined) {
+            g_credits = data.credits;
+        }
+        // Load upgrade costs
+        if (data.upgradeCosts) {
+            g_upgradeCosts = data.upgradeCosts;
+        }
         showWaveUI(`WAVE ${g_wave}`);
         g_enemiesToSpawn = 10 + Math.floor(g_wave * 2.5);
     } else {
@@ -1783,6 +1853,7 @@ function startGame(loadSave = false) {
         player.weaponLevel = 1;
         player.gemsCollected = 0;
         g_bombs = 3;
+        g_credits = 0;
         g_wave = 1;
         showWaveUI('WAVE 1');
         g_enemiesToSpawn = 12;
@@ -2205,12 +2276,12 @@ function update() {
             const t = translations[g_lang];
             const rand = Math.random();
             if (rand < 0.33) {
-                hazardState.type = 'METEORS';
+                hazardState.type = 'METEOR_SHOWER';
                 hazardState.duration = 600;
                 showWaveUI(t.meteorShower, true);
                 playSound('warning');
             } else if (rand < 0.66) {
-                hazardState.type = 'SOLAR_FLARES';
+                hazardState.type = 'SOLAR_FLARE';
                 hazardState.duration = 480; // 8 seconds
                 hazardState.timer = 0;
                 hazardState.flares = [];
@@ -2467,8 +2538,12 @@ function update() {
     // Instead we will handle wave/boss logic at the end of update()
 
     // Spawn regular enemies
-    if (frameCount % Math.max(20, 60 - g_wave * 5) === 0 && !boss && g_enemiesSpawnedThisWave < g_enemiesToSpawn && g_waveActive) {
-        spawnEnemy();
+    const spawnInterval = Math.max(20, 60 - g_wave * 5);
+    if (frameCount % spawnInterval === 0 && !boss && g_enemiesSpawnedThisWave < g_enemiesToSpawn && g_waveActive) {
+        // Don't spawn regular enemies during meteor shower
+        if (hazardState.type !== 'METEOR_SHOWER') {
+            spawnEnemy();
+        }
     }
 
     // Update Boss
@@ -3155,25 +3230,64 @@ function drawPlayer() {
     ctx.shadowBlur = 15;
     ctx.shadowColor = '#0ff';
 
-    // Always use fallback shape for reliability
-    ctx.fillStyle = player.color || '#0ff';
-    // Draw a spaceship shape
-    ctx.beginPath();
-    ctx.moveTo(0, -player.height / 2);
-    ctx.lineTo(player.width / 2, player.height / 2);
-    ctx.lineTo(0, player.height / 2 - 10);
-    ctx.lineTo(-player.width / 2, player.height / 2);
-    ctx.closePath();
-    ctx.fill();
-
-    // Add engine glow
-    ctx.fillStyle = '#ff6600';
-    ctx.beginPath();
-    ctx.moveTo(-5, player.height / 2 - 5);
-    ctx.lineTo(5, player.height / 2 - 5);
-    ctx.lineTo(0, player.height / 2 + 10 + Math.random() * 5);
-    ctx.closePath();
-    ctx.fill();
+    // Draw different shapes based on ship type
+    if (g_selectedShipType === 'speed') {
+        // Speed ship - sleek, neon green, pointy
+        ctx.fillStyle = '#39ff14';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.height / 2);
+        ctx.lineTo(player.width / 2 - 5, player.height / 2);
+        ctx.lineTo(0, player.height / 2 - 5);
+        ctx.lineTo(-player.width / 2 + 5, player.height / 2);
+        ctx.closePath();
+        ctx.fill();
+        // Engine glow
+        ctx.fillStyle = '#7fff00';
+        ctx.beginPath();
+        ctx.moveTo(-8, player.height / 2 - 5);
+        ctx.lineTo(8, player.height / 2 - 5);
+        ctx.lineTo(0, player.height / 2 + 15);
+        ctx.closePath();
+        ctx.fill();
+    } else if (g_selectedShipType === 'heavy') {
+        // Heavy ship - bulky, red, wide
+        ctx.fillStyle = '#ff3131';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.height / 2 + 5);
+        ctx.lineTo(player.width / 2, player.height / 2 - 5);
+        ctx.lineTo(player.width / 2 - 5, player.height / 2);
+        ctx.lineTo(0, player.height / 2);
+        ctx.lineTo(-player.width / 2 + 5, player.height / 2);
+        ctx.lineTo(-player.width / 2, player.height / 2 - 5);
+        ctx.closePath();
+        ctx.fill();
+        // Engine glow
+        ctx.fillStyle = '#ff6b6b';
+        ctx.beginPath();
+        ctx.moveTo(-12, player.height / 2 - 5);
+        ctx.lineTo(12, player.height / 2 - 5);
+        ctx.lineTo(0, player.height / 2 + 12);
+        ctx.closePath();
+        ctx.fill();
+    } else {
+        // Balanced ship - bright blue/cyan, standard
+        ctx.fillStyle = '#00d4ff';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.height / 2);
+        ctx.lineTo(player.width / 2, player.height / 2);
+        ctx.lineTo(0, player.height / 2 - 10);
+        ctx.lineTo(-player.width / 2, player.height / 2);
+        ctx.closePath();
+        ctx.fill();
+        // Engine glow
+        ctx.fillStyle = '#ff6600';
+        ctx.beginPath();
+        ctx.moveTo(-5, player.height / 2 - 5);
+        ctx.lineTo(5, player.height / 2 - 5);
+        ctx.lineTo(0, player.height / 2 + 10);
+        ctx.closePath();
+        ctx.fill();
+    }
 
     ctx.shadowBlur = 0;
     ctx.restore();
@@ -3733,7 +3847,7 @@ try {
         if (data.hasOwnProperty('music')) g_musicEnabled = data.music;
         if (data.hasOwnProperty('sounds')) g_soundsEnabled = data.sounds;
         if (data.hasOwnProperty('musicVol')) g_musicVolume = data.musicVol;
-        if (data.hasOwnProperty('soundsVol')) g_soundsVolume = data.soundsVol;
+        if (data.hasOwnProperty('soundsVolume')) g_soundsVolume = data.soundsVolume;
     }
 } catch (e) {
     console.warn('Failed to parse startup data:', e);

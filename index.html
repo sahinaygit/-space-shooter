@@ -84,37 +84,37 @@
                 <div id="shop-gems-display"><span id="shop-credits-label">Credits:</span> <span
                         id="shop-gems-count">0</span> <span id="shop-gems-suffix">Gems</span></div>
                 <div class="shop-grid">
-                    <div class="shop-item" id="shop-item-hp" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-hp">
                         <div class="item-icon" style="font-size:32px;">➕</div>
                         <h3 style="font-size:14px;margin:3px;">Hull</h3>
                         <div style="font-size:12px;">10</div>
                     </div>
-                    <div class="shop-item" id="shop-item-speed" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-speed">
                         <div class="item-icon" style="font-size:32px;">⚡</div>
                         <h3 style="font-size:14px;margin:3px;">Speed</h3>
                         <div style="font-size:12px;">15</div>
                     </div>
-                    <div class="shop-item" id="shop-item-repair" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-repair">
                         <div class="item-icon" style="font-size:32px;">🛠️</div>
                         <h3 style="font-size:14px;margin:3px;">Repair</h3>
                         <div style="font-size:12px;">5</div>
                     </div>
-                    <div class="shop-item" id="shop-item-bombs" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-bombs">
                         <div class="item-icon" style="font-size:32px;">💣</div>
                         <h3 style="font-size:14px;margin:3px;">Bomb</h3>
                         <div style="font-size:12px;">20</div>
                     </div>
-                    <div class="shop-item" id="shop-item-plasma" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-plasma">
                         <div class="item-icon" style="font-size:32px;">🔵</div>
                         <h3 style="font-size:14px;margin:3px;">Plasma</h3>
                         <div style="font-size:12px;">50</div>
                     </div>
-                    <div class="shop-item" id="shop-item-explosive" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-explosive">
                         <div class="item-icon" style="font-size:32px;">🟠</div>
                         <h3 style="font-size:14px;margin:3px;">Explos.</h3>
                         <div style="font-size:12px;">75</div>
                     </div>
-                    <div class="shop-item" id="shop-item-laser" onmouseover="this.style.background='rgba(0,255,255,0.3)';this.style.borderColor='#0ff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.2)'">
+                    <div class="shop-item" id="shop-item-laser">
                         <div class="item-icon" style="font-size:32px;">⚪</div>
                         <h3 style="font-size:14px;margin:3px;">Laser</h3>
                         <div style="font-size:12px;">100</div>
@@ -128,6 +128,7 @@
                 <p>WASD/Arrows to move. Space to shoot. Shift to dash.</p>
                 <button id="start-btn">Start New Game</button>
                 <button id="continue-btn" style="display:none; margin-top:20px;">Continue Saved Game</button>
+                <button id="reset-btn" onclick="if(confirm('Tüm ilerlemeniz silinecek! Emin misiniz?')){localStorage.clear();location.reload();}" style="margin-top:20px; background:rgba(255,100,100,0.2); border:1px solid #f00; color:#f00; font-size:14px; padding:8px 16px; cursor:pointer;">🔄 Reset Game</button>
                 <button id="lang-toggle-btn"
                     style="margin-top:20px; background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; font-size:16px; padding:10px 20px;">TÜRKÇE</button>
                 <button id="music-toggle-btn-start"
@@ -153,49 +154,59 @@
                 <h1 id="ship-select-title" style="color:#0ff; margin-bottom: 20px;">SELECT YOUR SHIP</h1>
                 <div style="display: flex; gap: 20px; justify-content: center; align-items: stretch;">
                     <div class="ship-option" onclick="window.selectShip('balanced')"
-                        style="background: rgba(255,255,255,0.05); border: 2px solid #aaa; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
-                        <h2 style="color:#aaa;">Balanced Cruiser</h2>
-                        <svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg"
-                            style="margin: 10px 0;">
-                            <path d="M 0,-30 L 15,-10 L 30,20 L 15,15 L 0,30 L -15,15 L -30,20 L -15,-10 Z"
-                                fill="#4fd1c5" stroke="#fff" stroke-width="1" />
+                        style="background: rgba(255,255,255,0.05); border: 2px solid #00d4ff; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
+                        <h2 style="color:#00d4ff;">Balanced Cruiser</h2>
+                        <svg width="100" height="100" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg" style="margin: 10px 0;">
+                            <path d="M 0,-45 L 15,-10 L 40,20 L 15,15 L 0,40 L -15,15 L -40,20 L -15,-10 Z" fill="#00d4ff" stroke="#fff" stroke-width="1"/>
+                            <ellipse cx="0" cy="-5" ry="15" rx="8" fill="#e6fffa"/>
+                            <path d="M -35,15 L -45,25 L -35,30 Z" fill="#00d4ff"/>
+                            <path d="M 35,15 L 45,25 L 35,30 Z" fill="#00d4ff"/>
+                            <rect x="-18" y="15" width="8" height="12" rx="2" fill="#1a202c" stroke="#00d4ff" stroke-width="1"/>
+                            <rect x="10" y="15" width="8" height="12" rx="2" fill="#1a202c" stroke="#00d4ff" stroke-width="1"/>
                         </svg>
-                        <ul
-                            style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
+                        <ul style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
                             <li>HP: 5</li>
                             <li>Speed: 5</li>
                             <li>Weapon: Lvl 1</li>
                         </ul>
                     </div>
                     <div class="ship-option" onclick="window.selectShip('speed')"
-                        style="background: rgba(255,255,255,0.05); border: 2px solid #0f0; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
-                        <h2 style="color:#0f0;">Light Interceptor</h2>
-                        <svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg"
-                            style="margin: 10px 0;">
-                            <path d="M 0,-40 L 10,-5 L 20,30 L 10,20 L 0,40 L -10,20 L -20,30 L -10,-5 Z" fill="#48bb78"
-                                stroke="#fff" stroke-width="1" />
+                        style="background: rgba(255,255,255,0.05); border: 2px solid #39ff14; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
+                        <h2 style="color:#39ff14;">Light Interceptor</h2>
+                        <svg width="100" height="100" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg" style="margin: 10px 0;">
+                            <path d="M 0,-48 L 12,-10 L 35,25 L 12,18 L 0,45 L -12,18 L -35,25 L -12,-10 Z" fill="#39ff14" stroke="#fff" stroke-width="1"/>
+                            <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#c6f6d5"/>
+                            <path d="M -30,20 L -40,32 L -28,35 Z" fill="#39ff14"/>
+                            <path d="M 30,20 L 40,32 L 28,35 Z" fill="#39ff14"/>
+                            <path d="M -15,20 L -22,35 L -10,38 Z" fill="#39ff14"/>
+                            <path d="M 15,20 L 22,35 L 10,38 Z" fill="#39ff14"/>
+                            <rect x="-12" y="22" width="6" height="15" rx="2" fill="#1a202c" stroke="#39ff14" stroke-width="1"/>
+                            <rect x="6" y="22" width="6" height="15" rx="2" fill="#1a202c" stroke="#39ff14" stroke-width="1"/>
                         </svg>
-                        <ul
-                            style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
+                        <ul style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
                             <li>HP: 3 <span style="color:#f00;">(-2)</span></li>
                             <li>Speed: 7 <span style="color:#0f0;">(+2)</span></li>
                             <li>Weapon: Lvl 1</li>
                         </ul>
                     </div>
                     <div class="ship-option" onclick="window.selectShip('heavy')"
-                        style="background: rgba(255,255,255,0.05); border: 2px solid #f00; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
-                        <h2 style="color:#f00;">Heavy Dreadnought</h2>
-                        <svg width="80" height="80" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg"
-                            style="margin: 10px 0;">
-                            <rect x="-20" y="-20" width="40" height="50" rx="5" fill="#e53e3e" stroke="#fff"
-                                stroke-width="1" />
-                            <path d="M 0,-40 L 20,-20 L -20,-20 Z" fill="#e53e3e" stroke="#fff" stroke-width="1" />
+                        style="background: rgba(255,255,255,0.05); border: 2px solid #ff3131; padding: 20px; border-radius: 10px; cursor: pointer; text-align: center; width: 200px; transition: 0.2s;">
+                        <h2 style="color:#ff3131;">Heavy Dreadnought</h2>
+                        <svg width="100" height="100" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg" style="margin: 10px 0;">
+                            <path d="M 0,-42 L 20,-15 L 45,25 L 20,20 L 5,45 L -5,45 L -20,20 L -45,25 L -20,-15 Z" fill="#ff3131" stroke="#fff" stroke-width="1"/>
+                            <rect x="-25" y="-10" width="50" height="25" rx="5" fill="#742a2a" stroke="#ff3131" stroke-width="1"/>
+                            <ellipse cx="0" cy="0" rx="10" ry="8" fill="#feb2b2"/>
+                            <rect x="-40" y="10" width="15" height="25" rx="3" fill="#742a2a" stroke="#ff3131" stroke-width="1"/>
+                            <rect x="25" y="10" width="15" height="25" rx="3" fill="#742a2a" stroke="#ff3131" stroke-width="1"/>
+                            <rect x="-8" y="18" width="16" height="20" rx="2" fill="#1a202c" stroke="#ff3131" stroke-width="1"/>
+                            <path d="M -45,25 L -50,35 L -40,38 Z" fill="#ff3131"/>
+                            <path d="M 45,25 L 50,35 L 40,38 Z" fill="#ff3131"/>
                         </svg>
-                        <ul
-                            style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
+                        <ul style="list-style: none; padding: 0; color: #ccc; text-align: left; font-size: 14px; margin-top:10px;">
                             <li>HP: 7 <span style="color:#0f0;">(+2)</span></li>
                             <li>Speed: 3.5 <span style="color:#f00;">(-1.5)</span></li>
                             <li>Weapon: Lvl 2 <span style="color:#0f0;">(+1)</span></li>
+                        </ul>
                         </ul>
                     </div>
                 </div>
@@ -222,7 +233,7 @@
             </div>
         </div>
     </div>
-    <script src="game.js?v=fix25"></script>
+    <script src="game.js?v=shopfix8"></script>
 </body>
 
 </html>
