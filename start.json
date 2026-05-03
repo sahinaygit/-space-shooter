@@ -1,0 +1,17 @@
+{
+  "daemon": true,
+  "run": [
+    {
+      "method": "shell.run",
+      "params": {
+        "message": "node server.js"
+      }
+    },
+    {
+      "method": "local.set",
+      "params": {
+        "url": "http://localhost:42424"
+      }
+    }
+  ]
+}

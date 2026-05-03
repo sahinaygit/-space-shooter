@@ -384,7 +384,7 @@ window.buyUpgrade = function (type) {
         playSound('powerup');
 
         // Apply Upgrade
-        'hp') {
+        if (type === 'hp') {
             player.maxHp += 1;
             player.hp += 1;
             g_upgradeCosts.hp = Math.ceil(g_upgradeCosts.hp * 1.5);
